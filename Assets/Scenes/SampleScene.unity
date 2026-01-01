@@ -3300,7 +3300,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileSize: 4
   roomCount: 20
+  wallHeight: 4
   floorPrefab: {fileID: 2101719903172445794, guid: 93784aa9f06568a4da25a17c866efd95, type: 3}
+  ceilingPrefab: {fileID: 114255751102537358, guid: c81d5569962227a42a5d94a5ae9811aa, type: 3}
+  wallSolid: {fileID: 7269485015740259131, guid: c2c093781fa00b040ad86fb28d8b8175, type: 3}
+  wallWindow: {fileID: 5447390135758846949, guid: 639a6c7316187fe43a170876a86c6964, type: 3}
+  wallDoor: {fileID: 4958123229793593967, guid: 4e7128d5127a4a34b818ffc3c6be8f37, type: 3}
   autoScale: 1
 --- !u!1 &1750865737
 GameObject:
