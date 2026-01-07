@@ -24,6 +24,8 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     
     System.Random rng;
 
+    [Range(0, 100)] public int diagonalChance = 50; 
+
     private HashSet<Vector2Int> pickedTiles = new HashSet<Vector2Int>();
     private List<GameObject> spawnedObjects = new List<GameObject>();
 
@@ -106,11 +108,55 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         bool up = pickedTiles.Contains(pos+Vector2Int.up);
         bool down = pickedTiles.Contains(pos+Vector2Int.down);
 
+        bool blockLeft = false;
+        bool blockRight= false;
+        bool blockUp= false;
+        bool blockDown = false;
 
-        if (!left) { SpawnWalls(pos, 270, ws * Vector3.left); }
-        if (!right) { SpawnWalls(pos, 90, ws * Vector3.right); }
-        if (!up) { SpawnWalls(pos, 0, ws*Vector3.forward); }
-        if(!down) { SpawnWalls(pos,180, ws* Vector3.back); }
+        //Diagonal Walls
+
+        
+        //up left corner
+        if(!up && !left && rng.Next(0,100) < diagonalChance)
+        {
+            SpawnDiagonalWalls(pos, 315);
+            blockUp = true;
+            blockLeft = true;
+        } 
+        //up right corner
+        if(!up && !right && rng.Next(0,100)<diagonalChance)
+        {
+            SpawnDiagonalWalls(pos, 45);
+            blockUp= true;
+            blockRight = true;
+        }
+        // down left corner
+        if (!down && !left && rng.Next(0, 100) < diagonalChance)
+        {
+            SpawnDiagonalWalls(pos, 225);
+            blockDown= true;
+            blockLeft = true;
+        }
+
+        // down right corner
+        if (!down && !right && rng.Next(0, 100) < diagonalChance)
+        {
+            SpawnDiagonalWalls(pos, 135);
+            blockDown = true;
+            blockRight = true;
+        }
+
+
+
+
+
+
+        //Straight Walls
+
+        if (!left && !blockLeft) { SpawnWalls(pos, 270, ws * Vector3.left); }
+        if (!right && !blockRight) { SpawnWalls(pos, 90, ws * Vector3.right); }
+        if (!up && !blockUp) { SpawnWalls(pos, 0, ws*Vector3.forward); }
+        if(!down&& !blockDown) { SpawnWalls(pos,180, ws* Vector3.back); }
 
 
     }
@@ -119,10 +165,19 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     private void SpawnWalls(Vector2Int tilepos, float rot,Vector3 offset)
     {
-        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 0, tilepos.y * wallHeight);
+        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
         Vector3 finalPos = worldPos + offset;
         Quaternion rotation = Quaternion.Euler(0, rot, 0);
         GameObject obj = Instantiate(wallSolidPrefab, finalPos, rotation, transform);
+        spawnedObjects.Add(obj);
+    }
+    private void SpawnDiagonalWalls(Vector2Int tilepos, float rot)
+    {
+        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
+        
+        Quaternion rotation = Quaternion.Euler(0, rot, 0);
+
+        GameObject obj = Instantiate(wallDiagonalPrefab, worldPos, rotation, transform);
         spawnedObjects.Add(obj);
     }
 
