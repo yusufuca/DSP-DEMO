@@ -1,0 +1,44 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class DetectingWall : MonoBehaviour
+{
+    [Header("Player")]
+    
+
+    public string solidWall = "solidWall";
+    public string diagonalWall = "diagonalWall";
+    public float maxDistance = 20f;
+
+    private void Update()
+    {
+        DetectWall();
+    }
+
+    void DetectWall() 
+    {
+       Vector3 origin = transform.position + (Vector3.up);
+
+
+
+        if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, maxDistance))
+        {
+            if (hit.collider.CompareTag(solidWall))
+            {
+                Debug.Log("SolidWall Detected");
+                Debug.DrawLine(origin, hit.point, Color.green);
+            }
+            else if (hit.collider.CompareTag(diagonalWall))
+            {
+                Debug.Log("DiagonalWall Detected");
+                Debug.DrawLine(origin, hit.point, Color.green);
+            }
+            
+        }
+        else { Debug.Log("Nothing");
+            Debug.DrawLine(origin, hit.point, Color.green);
+        }
+    }
+
+}
