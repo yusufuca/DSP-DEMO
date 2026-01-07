@@ -24,14 +24,15 @@ public class DetectingWall : MonoBehaviour
 
         if (Physics.Raycast(origin, transform.forward, out RaycastHit hit, maxDistance))
         {
+           float distance = hit.distance;
             if (hit.collider.CompareTag(solidWall))
             {
-                Debug.Log("SolidWall Detected");
+                Debug.Log("SolidWall Detected. Distance =" + distance);
                 Debug.DrawLine(origin, hit.point, Color.green);
             }
             else if (hit.collider.CompareTag(diagonalWall))
             {
-                Debug.Log("DiagonalWall Detected");
+                Debug.Log("DiagonalWall Detected. Distance =" + distance);
                 Debug.DrawLine(origin, hit.point, Color.green);
             }
             
