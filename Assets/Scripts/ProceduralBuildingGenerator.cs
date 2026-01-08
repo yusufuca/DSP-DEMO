@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Cryptography;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,6 +14,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     public GameObject wallDiagonalPrefab;
     public GameObject wallWindowPrefab;
     public GameObject wallDoorPrefab;
+    public GameObject ceilingDiagonalPrefab;
+
+    private GameObject nextPrefab;
 
     public int roomSize = 10;
     public int wallHeight = 4;
@@ -28,6 +33,8 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     private HashSet<Vector2Int> pickedTiles = new HashSet<Vector2Int>();
     private List<GameObject> spawnedObjects = new List<GameObject>();
+
+    
 
     private void Start()
     {
@@ -66,7 +73,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     }
 
-    void GenerateTileMap()
+    void GenerateTileMap() 
     {
        //FloorPlan
 
@@ -81,7 +88,10 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         }
         foreach(Vector2Int tilepos in pickedTiles)
         {
-            SpawnFloor(tilepos);
+            
+           // SpawnFloor(tilepos);
+           // SpawnCeiling(tilepos);
+
             CheckAndSpawn(tilepos);
             
         }
@@ -113,6 +123,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         bool blockUp= false;
         bool blockDown = false;
 
+        bool isDiagonal = false;
+        float rot = 0f;
+
         //Diagonal Walls
 
         
@@ -122,6 +135,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             SpawnDiagonalWalls(pos, 315);
             blockUp = true;
             blockLeft = true;
+
+            isDiagonal = true;
+            rot = 315;
         } 
         //up right corner
         if(!up && !right && rng.Next(0,100)<diagonalChance)
@@ -129,6 +145,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             SpawnDiagonalWalls(pos, 45);
             blockUp= true;
             blockRight = true;
+
+            isDiagonal = true;
+            rot = 45;
         }
         // down left corner
         if (!down && !left && rng.Next(0, 100) < diagonalChance)
@@ -136,6 +155,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             SpawnDiagonalWalls(pos, 225);
             blockDown= true;
             blockLeft = true;
+
+            isDiagonal = true;
+            rot = 225;
         }
 
         // down right corner
@@ -144,8 +166,21 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             SpawnDiagonalWalls(pos, 135);
             blockDown = true;
             blockRight = true;
+
+            isDiagonal = true;
+            rot = 135;
         }
 
+        if (isDiagonal)
+        {
+            SpawnDiagonalCeiling(pos,rot);
+            SpawnDiagonalFloor(pos,rot);
+        }
+        else
+        {
+            SpawnCeiling(pos);
+            SpawnFloor(pos);
+        }
 
 
 
@@ -165,11 +200,24 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     private void SpawnWalls(Vector2Int tilepos, float rot,Vector3 offset)
     {
+        nextPrefab = wallDoorPrefab;
+
+        if (rng.Next(0, 100) <= 75 && nextPrefab == wallDoorPrefab)
+        {
+            nextPrefab = wallSolidPrefab;
+        }
+        else if (rng.Next(0, 100) > 75 && nextPrefab == wallDoorPrefab)
+        {
+            nextPrefab = wallWindowPrefab;
+        }
+
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
         Vector3 finalPos = worldPos + offset;
         Quaternion rotation = Quaternion.Euler(0, rot, 0);
-        GameObject obj = Instantiate(wallSolidPrefab, finalPos, rotation, transform);
+        GameObject obj = Instantiate(nextPrefab, finalPos, rotation, transform);
         spawnedObjects.Add(obj);
+
+        nextPrefab = null;
     }
     private void SpawnDiagonalWalls(Vector2Int tilepos, float rot)
     {
@@ -188,7 +236,35 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
         spawnedObjects.Add(obj);
     }
+    private void SpawnCeiling(Vector2Int tilepos)
+    {
 
+        
+
+        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, wallHeight, tilepos.y * wallHeight);
+        GameObject obj = Instantiate(ceilingPrefab, worldPos, Quaternion.identity, transform);
+
+        spawnedObjects.Add(obj);
+
+
+    }
+
+    private void SpawnDiagonalFloor(Vector2Int tilepos, float rot)
+    {
+        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 0, tilepos.y*wallHeight);
+        Quaternion rotation = Quaternion.Euler(0,rot, 0);   
+        GameObject obj = Instantiate(ceilingDiagonalPrefab, worldPos, rotation, transform); 
+
+        spawnedObjects.Add(obj);
+    }
+    private void SpawnDiagonalCeiling(Vector2Int tilepos, float rot)
+    {
+        Vector3 worldPos = new Vector3(tilepos.x * wallWidth, wallHeight, tilepos.y * wallHeight);
+        Quaternion rotation = Quaternion.Euler(0, rot, 0);
+        GameObject obj = Instantiate(ceilingDiagonalPrefab, worldPos, rotation, transform);
+
+        spawnedObjects.Add(obj);
+    }
     void ClearHouse()
     {
         // Destroy all the old game objects

@@ -7,6 +7,8 @@ TagManager:
   - CinemachineTarget
   - wallSolid
   - wallDiagonal
+  - wallWindow
+  - wallDoor
   layers:
   - Default
   - TransparentFX

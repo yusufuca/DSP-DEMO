@@ -7,8 +7,10 @@ public class DetectingWall : MonoBehaviour
     [Header("Player")]
     
 
-    public string solidWall = "solidWall";
-    public string diagonalWall = "diagonalWall";
+    public string solidWall = "wallSolid";
+    public string diagonalWall = "wallDiagonal";
+    public string windowWall = "wallWindow";
+    public string doorWall = "wallDoor";
     public float maxDistance = 20f;
 
     private void Update()
@@ -35,7 +37,17 @@ public class DetectingWall : MonoBehaviour
                 Debug.Log("DiagonalWall Detected. Distance =" + distance);
                 Debug.DrawLine(origin, hit.point, Color.green);
             }
-            
+            else if (hit.collider.CompareTag(windowWall))
+            {
+                Debug.Log("WindowWall Detected. Distance =" + distance);
+                Debug.DrawLine(origin, hit.point, Color.green);
+            }
+            else if (hit.collider.CompareTag(doorWall))
+            {
+                Debug.Log("DoorWall Detected. Distance =" + distance);
+                Debug.DrawLine(origin, hit.point, Color.green);
+            }
+
         }
         else { Debug.Log("Nothing");
             Debug.DrawLine(origin, hit.point, Color.green);
