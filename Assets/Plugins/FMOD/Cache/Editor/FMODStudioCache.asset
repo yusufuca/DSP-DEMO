@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-7541906100206668714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/Clap
+  m_EditorClassIdentifier: 
+  Path: event:/Clap
+  Guid:
+    Data1: 206147806
+    Data2: 1286915523
+    Data3: 1445915300
+    Data4: -2122279670
+  Banks:
+  - {fileID: -5301400106237859156}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 500
 --- !u!114 &-5301400106237859156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15,10 +42,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639035074537377685
+  lastModified: 639035125673401620
   FileSizes:
   - Name: Desktop
-    Value: 1074
+    Value: 52224
   Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
@@ -35,15 +62,43 @@ MonoBehaviour:
   EditorBanks:
   - {fileID: 5800111078373747694}
   - {fileID: -5301400106237859156}
-  EditorEvents: []
-  EditorParameters: []
+  EditorEvents:
+  - {fileID: -7541906100206668714}
+  EditorParameters:
+  - {fileID: 2802092296333379079}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639035074537428314
-  SerializableEventsDict: []
+  cacheTime: 639035125673426748
+  SerializableEventsDict:
+  - key: event:/Clap
+    index: 0
+--- !u!114 &2802092296333379079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/aRoomSize
+  m_EditorClassIdentifier: 
+  Name: aRoomSize
+  StudioPath: parameter:/aRoomSize
+  Min: 0
+  Max: 20
+  Default: 0
+  ID:
+    data1: 3876511308
+    data2: 2273914743
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &5800111078373747694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,8 +114,8 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639035074537428314
+  lastModified: 639035125673426748
   FileSizes:
   - Name: Desktop
-    Value: 724
+    Value: 816
   Exists: 1

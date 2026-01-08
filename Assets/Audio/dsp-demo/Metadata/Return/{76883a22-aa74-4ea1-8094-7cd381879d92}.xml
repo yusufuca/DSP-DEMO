@@ -31,6 +31,42 @@
 		<property name="dryLevel">
 			<value>-80</value>
 		</property>
+		<relationship name="automators">
+			<destination>{5d6c6534-4932-4238-af98-46dd84072f06}</destination>
+		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{065d986b-ae94-48b5-8c90-6f721fd16d6a}" />
+	<object class="Automator" id="{5d6c6534-4932-4238-af98-46dd84072f06}">
+		<property name="nameOfPropertyBeingAutomated">
+			<value>decayTime</value>
+		</property>
+		<relationship name="automationCurves">
+			<destination>{a173d84b-9c87-4aa3-90b1-5fdf424d998c}</destination>
+		</relationship>
+	</object>
+	<object class="AutomationCurve" id="{a173d84b-9c87-4aa3-90b1-5fdf424d998c}">
+		<relationship name="parameter">
+			<destination>{6fed4eb1-71a1-4b2a-ba2d-e66ea560b4aa}</destination>
+		</relationship>
+		<relationship name="automationPoints">
+			<destination>{2ce2fcf3-a511-47a2-afd9-d551a839e51a}</destination>
+			<destination>{adaa6c1c-aa4f-4d45-9a39-b068f26d8fbf}</destination>
+		</relationship>
+	</object>
+	<object class="AutomationPoint" id="{2ce2fcf3-a511-47a2-afd9-d551a839e51a}">
+		<property name="position">
+			<value>0.31073446327683618</value>
+		</property>
+		<property name="value">
+			<value>275.005676</value>
+		</property>
+	</object>
+	<object class="AutomationPoint" id="{adaa6c1c-aa4f-4d45-9a39-b068f26d8fbf}">
+		<property name="position">
+			<value>19.915254237288135</value>
+		</property>
+		<property name="value">
+			<value>20000</value>
+		</property>
+	</object>
 </objects>
