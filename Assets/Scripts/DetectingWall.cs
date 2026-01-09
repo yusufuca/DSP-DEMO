@@ -16,7 +16,11 @@ public class DetectingWall : MonoBehaviour
     public string diagonalWall = "wallDiagonal";
     public string windowWall = "wallWindow";
     public string doorWall = "wallDoor";
+    public string ceiling = "ceiling";
+    public string plane = "plane";
+    public string floor = "floor";
     public float maxDistance = 20f;
+
 
 
 
@@ -25,11 +29,15 @@ public class DetectingWall : MonoBehaviour
     public TextMeshProUGUI backText;
     public TextMeshProUGUI leftText;
     public TextMeshProUGUI rightText;
+    public TextMeshProUGUI upText;
+    public TextMeshProUGUI downText;
 
     float fDistance;
-    float bdistance;
+    float bDistance;
     float rDistance;
     float lDistance;
+    float uDistance;
+    float dDistance;
 
 
     private void Update()
@@ -54,12 +62,12 @@ public class DetectingWall : MonoBehaviour
     {
         /* REVERB TIME */
 
-        float reverbTime = (fDistance + bdistance + lDistance + rDistance) / 4;
+        float reverbTime = (fDistance + bDistance + lDistance + rDistance + uDistance + dDistance) / 6;
         
 
         /* EARLY DELAY */
 
-        float earlyDelay = Mathf.Min(fDistance, Mathf.Min(bdistance, Mathf.Min(lDistance, rDistance)));
+        float earlyDelay = Mathf.Min(fDistance, Mathf.Min(bDistance, Mathf.Min(lDistance, rDistance)));
 
         /* LATE DELAY */
 
@@ -69,20 +77,22 @@ public class DetectingWall : MonoBehaviour
         ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay);
     }
 
-    void DetectWall() 
+    void DetectWall()
     {
-       Vector3 origin = transform.position + (Vector3.up);
+        Vector3 origin = transform.position + (Vector3.up);
         fDistance = maxDistance;
-        bdistance = maxDistance;
+        bDistance = maxDistance;
         rDistance = maxDistance;
         lDistance = maxDistance;
+        uDistance = maxDistance;
+        dDistance = maxDistance;
         //   Front
 
         if (Physics.Raycast(origin, transform.forward, out RaycastHit hitFront, maxDistance))
         {
-          
+
             fDistance = hitFront.distance;
-            
+
             if (hitFront.collider.CompareTag(solidWall))
             {
                 frontText.text = "Front SolidWall Detected Distance: " + fDistance;
@@ -109,52 +119,52 @@ public class DetectingWall : MonoBehaviour
             }
 
         }
-        else 
+        else
         {
-            fDistance = maxDistance;
+            fDistance = 0;
             frontText.text = "Front Distance: Null";
             Debug.Log("Nothing front");
             Debug.DrawLine(origin, hitFront.point, Color.green);
-            
+
         }
-        
+
         // Back
 
 
         if (Physics.Raycast(origin, -transform.forward, out RaycastHit hitBack, maxDistance))
         {
-             bdistance = hitBack.distance;
-            
+            bDistance = hitBack.distance;
+
 
             if (hitBack.collider.CompareTag(solidWall))
             {
-                backText.text = "Back SolidWall Detected Distance: " + bdistance;
-                Debug.Log("SolidWall Detected back. Distance =" + bdistance);
+                backText.text = "Back SolidWall Detected Distance: " + bDistance;
+                Debug.Log("SolidWall Detected back. Distance =" + bDistance);
                 Debug.DrawLine(origin, hitBack.point, Color.red);
             }
             else if (hitBack.collider.CompareTag(diagonalWall))
             {
-                backText.text = "Back Diagonal Detected Distance: " + bdistance;
-                Debug.Log("DiagonalWall Detected back. Distance =" + bdistance);
+                backText.text = "Back Diagonal Detected Distance: " + bDistance;
+                Debug.Log("DiagonalWall Detected back. Distance =" + bDistance);
                 Debug.DrawLine(origin, hitBack.point, Color.red);
             }
             else if (hitBack.collider.CompareTag(windowWall))
             {
-                backText.text = "Back Window Detected Distance: " + bdistance;
-                Debug.Log("WindowWall Detected back. Distance =" + bdistance);
+                backText.text = "Back Window Detected Distance: " + bDistance;
+                Debug.Log("WindowWall Detected back. Distance =" + bDistance);
                 Debug.DrawLine(origin, hitBack.point, Color.red);
             }
             else if (hitBack.collider.CompareTag(doorWall))
             {
-                backText.text = "Back Door Detected Distance: " + bdistance;
-                Debug.Log("DoorWall Detected back. Distance =" + bdistance);
+                backText.text = "Back Door Detected Distance: " + bDistance;
+                Debug.Log("DoorWall Detected back. Distance =" + bDistance);
                 Debug.DrawLine(origin, hitBack.point, Color.red);
             }
 
         }
         else
         {
-            bdistance = maxDistance;
+            bDistance = 0;
             backText.text = "Back Distance: Null";
             Debug.Log("Nothing back");
             Debug.DrawLine(origin, hitBack.point, Color.red);
@@ -166,7 +176,7 @@ public class DetectingWall : MonoBehaviour
         if (Physics.Raycast(origin, transform.right, out RaycastHit hitRight, maxDistance))
         {
             rDistance = hitRight.distance;
-            
+
             if (hitRight.collider.CompareTag(solidWall))
             {
                 rightText.text = "Right SolidWall Detected Distance: " + rDistance;
@@ -195,7 +205,7 @@ public class DetectingWall : MonoBehaviour
         }
         else
         {
-            rDistance = maxDistance;
+            rDistance = 0;
             rightText.text = "Right Distance: Null";
             Debug.Log("Nothing right");
             Debug.DrawLine(origin, hitRight.point, Color.blue);
@@ -206,7 +216,7 @@ public class DetectingWall : MonoBehaviour
         if (Physics.Raycast(origin, -transform.right, out RaycastHit hitLeft, maxDistance))
         {
             lDistance = hitLeft.distance;
-            
+
             if (hitLeft.collider.CompareTag(solidWall))
             {
                 leftText.text = "Left SolidWall Detected Distance: " + lDistance;
@@ -235,13 +245,72 @@ public class DetectingWall : MonoBehaviour
         }
         else
         {
-            lDistance = maxDistance;
+            lDistance = 0;
             Debug.Log("Nothing Left");
             leftText.text = "Left Distance: Null";
             Debug.DrawLine(origin, hitLeft.point, Color.magenta);
         }
 
+        // UP
 
+        if (Physics.Raycast(origin, transform.up, out RaycastHit hitUp, maxDistance))
+        {
+            uDistance = hitUp.distance;
+
+            if (hitUp.collider.CompareTag(floor))
+            {
+                upText.text = "Up Floor Detected Distance: " + uDistance;
+                
+                Debug.DrawLine(origin, hitUp.point, Color.magenta);
+            }
+            
+            else if (hitUp.collider.CompareTag(ceiling))
+            {
+                upText.text = "Up Ceiling Detected Distance: " + uDistance;
+                Debug.DrawLine(origin, hitUp.point, Color.magenta);
+            }
+
+        }
+        else
+        {
+            uDistance = 0;
+            
+            upText.text = "Up Distance: Null";
+            Debug.DrawLine(origin, hitUp.point, Color.magenta);
+        }
+
+        // DOWN
+
+        if (Physics.Raycast(origin, -transform.up, out RaycastHit hitDown, maxDistance))
+        {
+            dDistance = hitDown.distance;
+
+            if (hitDown.collider.CompareTag(plane))
+            {
+                downText.text = "Down plane Detected Distance: " + dDistance;
+
+                Debug.DrawLine(origin, hitDown.point, Color.white);
+            }
+
+            else if (hitDown.collider.CompareTag(ceiling))
+            {
+                downText.text = "Down Ceiling Detected Distance: " + dDistance;
+                Debug.DrawLine(origin, hitDown.point, Color.magenta);
+            }
+            else if (hitDown.collider.CompareTag(floor))
+            {
+                downText.text = "Down Floor Detected Distance: " + dDistance;
+                Debug.DrawLine(origin, hitDown.point, Color.magenta);
+            }
+
+        }
+        else
+        {
+            dDistance = 0;
+
+            downText.text = "Down Distance: Null";
+            Debug.DrawLine(origin, hitDown.point, Color.magenta);
+        }
 
 
 

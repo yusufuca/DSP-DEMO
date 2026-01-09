@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
 	<object class="MixerReturn" id="{76883a22-aa74-4ea1-8094-7cd381879d92}">
+		<property name="volume">
+			<value>4</value>
+		</property>
 		<property name="overridingInputFormat">
 			<value>2</value>
 		</property>
@@ -108,7 +111,7 @@
 			<value>20</value>
 		</property>
 		<property name="value">
-			<value>3500</value>
+			<value>7000.00195</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{5ae8f882-de43-4b27-ac8b-4364fead8707}">

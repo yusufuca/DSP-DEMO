@@ -9,6 +9,9 @@ TagManager:
   - wallDiagonal
   - wallWindow
   - wallDoor
+  - ceiling
+  - plane
+  - floor
   layers:
   - Default
   - TransparentFX
