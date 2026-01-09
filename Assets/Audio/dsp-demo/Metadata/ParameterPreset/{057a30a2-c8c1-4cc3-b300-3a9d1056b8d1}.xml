@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
-	<object class="ParameterPreset" id="{cf908369-97af-4d71-b1e7-f1c119d0d5fd}">
+	<object class="ParameterPreset" id="{057a30a2-c8c1-4cc3-b300-3a9d1056b8d1}">
 		<property name="name">
-			<value>reverbTime</value>
+			<value>earlyDelay</value>
 		</property>
 		<relationship name="folder">
 			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
 		</relationship>
 		<relationship name="parameter">
-			<destination>{6fed4eb1-71a1-4b2a-ba2d-e66ea560b4aa}</destination>
+			<destination>{92b7db33-efac-4bc9-b85a-a8df27a791dd}</destination>
 		</relationship>
 	</object>
-	<object class="GameParameter" id="{6fed4eb1-71a1-4b2a-ba2d-e66ea560b4aa}">
+	<object class="GameParameter" id="{92b7db33-efac-4bc9-b85a-a8df27a791dd}">
 		<property name="maximum">
 			<value>20</value>
 		</property>

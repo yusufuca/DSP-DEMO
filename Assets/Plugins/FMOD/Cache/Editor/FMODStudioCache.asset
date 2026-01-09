@@ -27,6 +27,30 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 500
+--- !u!114 &-5605446580343659500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/earlyDelay
+  m_EditorClassIdentifier: 
+  Name: earlyDelay
+  StudioPath: parameter:/earlyDelay
+  Min: 0
+  Max: 20
+  Default: 0
+  ID:
+    data1: 1049097934
+    data2: 2363719954
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &-5301400106237859156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42,10 +66,34 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639035125673401620
+  lastModified: 639035968883011299
   FileSizes:
   - Name: Desktop
-    Value: 52224
+    Value: 53056
+  Exists: 1
+--- !u!114 &-4734576490075718714
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/lateDelay
+  m_EditorClassIdentifier: 
+  Name: lateDelay
+  StudioPath: parameter:/lateDelay
+  Min: 0
+  Max: 20
+  Default: 0
+  ID:
+    data1: 2103098994
+    data2: 4251808955
+  Type: 0
+  IsGlobal: 1
+  Labels: []
   Exists: 1
 --- !u!114 &11400000
 MonoBehaviour:
@@ -66,12 +114,14 @@ MonoBehaviour:
   - {fileID: -7541906100206668714}
   EditorParameters:
   - {fileID: 2802092296333379079}
+  - {fileID: -4734576490075718714}
+  - {fileID: -5605446580343659500}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639035125673426748
+  cacheTime: 639035968883036493
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -85,10 +135,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/aRoomSize
+  m_Name: parameter:/reverbTime
   m_EditorClassIdentifier: 
-  Name: aRoomSize
-  StudioPath: parameter:/aRoomSize
+  Name: reverbTime
+  StudioPath: parameter:/reverbTime
   Min: 0
   Max: 20
   Default: 0
@@ -114,8 +164,8 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639035125673426748
+  lastModified: 639035968883036493
   FileSizes:
   - Name: Desktop
-    Value: 816
+    Value: 910
   Exists: 1

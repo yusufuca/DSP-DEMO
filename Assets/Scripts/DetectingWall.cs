@@ -17,15 +17,19 @@ public class DetectingWall : MonoBehaviour
     public string windowWall = "wallWindow";
     public string doorWall = "wallDoor";
     public float maxDistance = 20f;
-    
-    
+
+
+
     [Header("Text")]
     public TextMeshProUGUI frontText;
     public TextMeshProUGUI backText;
     public TextMeshProUGUI leftText;
     public TextMeshProUGUI rightText;
 
-  
+    float fDistance;
+    float bdistance;
+    float rDistance;
+    float lDistance;
 
 
     private void Update()
@@ -35,7 +39,10 @@ public class DetectingWall : MonoBehaviour
         { 
             Clapping(); 
         }
+        ParameterUpdater();
+        
     }
+
 
     private void Clapping()
     {
@@ -43,13 +50,32 @@ public class DetectingWall : MonoBehaviour
         RuntimeManager.PlayOneShot(clapSFX);
     }
 
+    void ParameterUpdater()
+    {
+        /* REVERB TIME */
+
+        float reverbTime = (fDistance + bdistance + lDistance + rDistance) / 4;
+        
+
+        /* EARLY DELAY */
+
+        float earlyDelay = Mathf.Min(fDistance, Mathf.Min(bdistance, Mathf.Min(lDistance, rDistance)));
+
+        /* LATE DELAY */
+
+        float lateDelay = earlyDelay + (reverbTime * 0.5f);
+
+
+        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay);
+    }
+
     void DetectWall() 
     {
        Vector3 origin = transform.position + (Vector3.up);
-        float fDistance = maxDistance;
-        float bdistance = maxDistance;
-        float rDistance = maxDistance;
-        float lDistance =  maxDistance;
+        fDistance = maxDistance;
+        bdistance = maxDistance;
+        rDistance = maxDistance;
+        lDistance = maxDistance;
         //   Front
 
         if (Physics.Raycast(origin, transform.forward, out RaycastHit hitFront, maxDistance))
@@ -89,6 +115,7 @@ public class DetectingWall : MonoBehaviour
             frontText.text = "Front Distance: Null";
             Debug.Log("Nothing front");
             Debug.DrawLine(origin, hitFront.point, Color.green);
+            
         }
         
         // Back
@@ -213,9 +240,12 @@ public class DetectingWall : MonoBehaviour
             leftText.text = "Left Distance: Null";
             Debug.DrawLine(origin, hitLeft.point, Color.magenta);
         }
-        float avRoomSize = (fDistance + bdistance + lDistance + rDistance) / 4;
 
-        RuntimeManager.StudioSystem.setParameterByName("aRoomSize", avRoomSize);
+
+
+
+
     }
+
 
 }
