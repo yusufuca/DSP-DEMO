@@ -12,6 +12,10 @@ TagManager:
   - ceiling
   - plane
   - floor
+  - wallConcrete
+  - wallDiagonalConcrete
+  - wallJagged
+  - wallDiagonalJagged
   layers:
   - Default
   - TransparentFX

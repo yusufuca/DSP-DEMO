@@ -30,6 +30,33 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     public GameObject wallDoorPrefab;
     public GameObject ceilingDiagonalPrefab;
 
+
+    [Header("Concrete")]
+    public GameObject wallConcrete;
+    public GameObject wallDiagonalConcrete;
+
+    [Header("Wood")]
+    
+    public GameObject wallWood;
+    public GameObject wallDiagonalWood;
+    
+    
+    [Header("Marble")]
+    
+    public GameObject wallMarble;
+    public GameObject wallDiagonalMarble;
+
+    [Header("Jagged")]
+
+    public GameObject wallJagged;
+    public GameObject wallDiagonalJagged;
+
+    private float materialHardness = 1f;
+    private float hardnessJagged = 1f;
+    private float hardnessMarble = 2f;
+    private float hardnessWood = 0.5f;
+    private float hardnessConcrete = 1.5f;
+    
     private GameObject nextPrefab;
 
     public int roomSize = 10;

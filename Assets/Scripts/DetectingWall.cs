@@ -5,6 +5,7 @@ using TMPro;
 using FMODUnity;
 using FMOD.Studio;
 using System;
+using UnityEngine.InputSystem;
 
 public class DetectingWall : MonoBehaviour
 {
@@ -39,7 +40,43 @@ public class DetectingWall : MonoBehaviour
     float uDistance;
     float dDistance;
 
+    /*MATERIAL HARDNESS*/
 
+   
+
+    private float hardnessJagged = 1f;
+
+    private float hardnessMarble = 2f;
+
+    private float hardnessWood = 0.5f;
+
+    private float hardnessConcrete = 1.5f;
+
+    /*                             */
+
+    private float[] distances = new float[6];
+    private Sensor[] sensors;
+    private float materialHardness = 1f;
+
+    private struct Sensor
+    {
+        public string name;
+        public Vector3 dir;
+        public TextMeshProUGUI ui;
+        public Color color;
+    }
+    private void Start()
+    {
+        sensors = new Sensor[]
+        {
+            new Sensor { name="Front", dir=transform.forward,  ui=frontText, color=Color.green },   // Index 0
+            new Sensor { name="Back",  dir=-transform.forward, ui=backText,  color=Color.red },     // Index 1
+            new Sensor { name="Right", dir=transform.right,    ui=rightText, color=Color.blue },    // Index 2
+            new Sensor { name="Left",  dir=-transform.right,   ui=leftText,  color=Color.magenta }, // Index 3
+            new Sensor { name="Up",    dir=transform.up,       ui=upText,    color=Color.yellow },  // Index 4
+            new Sensor { name="Down",  dir=-transform.up,      ui=downText,  color=Color.white }    // Index 5
+        };
+    }
     private void Update()
     {
         DetectWall();
@@ -62,7 +99,7 @@ public class DetectingWall : MonoBehaviour
     {
         /* REVERB TIME */
 
-        float reverbTime = (fDistance + bDistance + lDistance + rDistance + uDistance + dDistance) / 6;
+        float reverbTime = ((fDistance + bDistance + lDistance + rDistance + uDistance + dDistance) / 6) * materialHardness;
         
 
         /* EARLY DELAY */
@@ -76,6 +113,7 @@ public class DetectingWall : MonoBehaviour
 
         ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay);
     }
+
 
     void DetectWall()
     {
