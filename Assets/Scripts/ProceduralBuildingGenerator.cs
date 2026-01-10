@@ -7,6 +7,20 @@ using UnityEngine.UIElements;
 
 public class ProceduralBuildingGenerator : MonoBehaviour
 {
+    public static ProceduralBuildingGenerator HouseInstance { get; private set; }
+
+    private void Awake()
+    {
+        if (HouseInstance != null && HouseInstance != this)
+        {
+            Destroy(this.gameObject);
+        }
+        else
+        {
+            HouseInstance = this;
+        }
+    }
+
     [Header("Prefabs")]
     public GameObject floorPrefab;
     public GameObject ceilingPrefab;
@@ -39,45 +53,42 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     private void Start()
     {
         GenerateSeed();
-        GenerateHouse();
+  
             
     }
-    private void Update()
-    {
-        if(Input.GetKeyDown(KeyCode.F)) 
-        {
-            GenerateHouse();
-           
-        }
-    }
+
     void GenerateSeed()
     {
         if (gameSeed == 0)
         {
          gameSeed = Random.Range(1, 1000000);
-            Debug.Log("Current seed is " + gameSeed);
+           
         }
-        else
-        {
+       
+       
             Debug.Log("Current seed is " + gameSeed);
-        }
+        
 
-            rng = new System.Random(gameSeed);
+            
     }
 
-    void GenerateHouse()
+    public void GenerateHouse(Vector2Int pos)
     {
+
+        int houseSpecificSeed = gameSeed + (pos.x * 1000) + (pos.y * 100);
+        rng = new System.Random(houseSpecificSeed);
+
         ClearHouse();
-        GenerateTileMap();
+        GenerateTileMap(pos);
         
 
     }
 
-    void GenerateTileMap() 
+    void GenerateTileMap(Vector2Int Pos) 
     {
        //FloorPlan
 
-        Vector2Int currentPos = Vector2Int.zero;
+        Vector2Int currentPos = Pos;
         pickedTiles.Add(currentPos);
 
         for (int i = 0; i < roomSize; i++) 
