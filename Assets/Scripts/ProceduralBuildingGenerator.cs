@@ -51,12 +51,10 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     public GameObject wallJagged;
     public GameObject wallDiagonalJagged;
 
-    private float materialHardness = 1f;
-    private float hardnessJagged = 1f;
-    private float hardnessMarble = 2f;
-    private float hardnessWood = 0.5f;
-    private float hardnessConcrete = 1.5f;
     
+
+
+
     private GameObject nextPrefab;
 
     public int roomSize = 10;

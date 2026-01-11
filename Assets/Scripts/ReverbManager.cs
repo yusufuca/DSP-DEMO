@@ -21,11 +21,12 @@ public class ReverbManager : MonoBehaviour
 
 
 
-    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay)
+    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF)
     {
         RuntimeManager.StudioSystem.setParameterByName("reverbTime", avRoomSize);
         RuntimeManager.StudioSystem.setParameterByName("earlyDelay", earlyDelay);
         RuntimeManager.StudioSystem.setParameterByName("lateDelay", lateDelay);
+        RuntimeManager.StudioSystem.setParameterByName("onOF", onOF);
 
     }
 }

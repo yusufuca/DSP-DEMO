@@ -66,10 +66,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639036089276363367
+  lastModified: 639037513764659096
   FileSizes:
   - Name: Desktop
-    Value: 53088
+    Value: 53568
   Exists: 1
 --- !u!114 &-4734576490075718714
 MonoBehaviour:
@@ -116,15 +116,40 @@ MonoBehaviour:
   - {fileID: 2802092296333379079}
   - {fileID: -4734576490075718714}
   - {fileID: -5605446580343659500}
+  - {fileID: 2583587561185576945}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639036089276384486
+  cacheTime: 639037513764687700
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
+--- !u!114 &2583587561185576945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/onOF
+  m_EditorClassIdentifier: 
+  Name: onOF
+  StudioPath: parameter:/onOF
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 3069161701
+    data2: 3787466343
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &2802092296333379079
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -164,8 +189,8 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639036089276384486
+  lastModified: 639037513764687700
   FileSizes:
   - Name: Desktop
-    Value: 910
+    Value: 946
   Exists: 1

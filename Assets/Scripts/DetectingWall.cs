@@ -105,32 +105,57 @@ public class DetectingWall : MonoBehaviour
 
         float totalDistances = 0f;
 
-        for (int i = 0; i < 6; i++) totalDistances += distances[i];
+        for (int i = 0; i < 6; i++) totalDistances += distances[i]/6;
 
         float totalHardness = 0f;
 
-        for (int i = 0; i < 6; i++) totalHardness += hardnesses[i];
+        for (int i = 0; i < 6; i++) totalHardness += hardnesses[i]/6;
 
-
+        float minWallDist = maxDistance;
         /* REVERB TIME */
 
 
-        float reverbTime = (totalDistances * totalHardness) / 6;
+        float reverbTime = (totalDistances * totalHardness);
 
         reverbTimeText.text = $"ReverbTime is: {reverbTime}"; 
 
         /* EARLY DELAY */
 
-        float earlyDelay = distances.Where(d => d > 0).DefaultIfEmpty(maxDistance).Min();
+        for (int i = 0; i < 4; i++)
+        {
+            if (distances[i] > 0 && distances[i] < minWallDist)
+            {
+                minWallDist = distances[i];
+                
+            }
+          
+          
+        }
+
+        // float earlyDelay = distances.Where(d => d > 2).DefaultIfEmpty(maxDistance).Min();
+        float earlyDelay = minWallDist;
 
         earlyDelayText.text = $"EarlyDelay is: {earlyDelay}";
 
         /* LATE DELAY */
 
-        float lateDelay = earlyDelay + (reverbTime * 0.5f);
-
+        float lateDelay =(reverbTime * 0.5f);
         lateDelayText.text = $"LateDleay is: {lateDelay}";
-        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay);
+        /* REVERB ON OF */
+
+        int onOF = 1;
+
+        if (distances[4] > 0)
+        {
+            onOF = 1;
+        }
+        else
+        {
+            onOF = 0;   
+        }
+
+  
+        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay,onOF);
 
 
     }
@@ -149,20 +174,22 @@ public class DetectingWall : MonoBehaviour
                 
                 distances[i] = hit.distance;
                 string hitTag = hit.collider.tag;
-     
-                    if (hardnessLookup.TryGetValue(hitTag, out float matHardness))
-                    {
-                        hardnesses[i] = matHardness;
-                        s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]}";
-                    }
-
+                //Debug.DrawRay(origin, hit.point, s.color);
+                if (hardnessLookup.TryGetValue(hitTag, out float matHardness))
+                {
+                     hardnesses[i] = matHardness;
+                     s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]}";
+                }
+                    
             }
             else
             {
                 hardnesses[i] = 0;
                 distances[i] = 0;
-                s.ui.text = $"{s.name} Distance: Null";
+                s.ui.text = $"{s.name} Distance: {distances[i]}";
+               // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
             }
+            
         }
     }
 
