@@ -43,16 +43,18 @@ public class DetectingWall : MonoBehaviour
     {
         public string tag;
         public float hardness;
+        public float jagness;
     }
    
 
    
     private float[] distances = new float[6];
     private float[] hardnesses = new float[6];
+    private float[] jagnesses = new float[6];
     private Sensor[] sensors;
-    private float materialHardness = 1f;
 
-    private Dictionary<string, float> hardnessLookup = new Dictionary<string, float>();
+
+    private Dictionary<string, MaterialData> hardnessLookup = new Dictionary<string, MaterialData>();
 
     private struct Sensor
     {
@@ -77,7 +79,7 @@ public class DetectingWall : MonoBehaviour
         {
             if (!hardnessLookup.ContainsKey(mat.tag))
             {
-                hardnessLookup.Add(mat.tag, mat.hardness);
+                hardnessLookup.Add(mat.tag, mat);
             }
         }
     }
@@ -111,6 +113,10 @@ public class DetectingWall : MonoBehaviour
 
         for (int i = 0; i < 6; i++) totalHardness += hardnesses[i]/6;
 
+        float totalJagness = 0f;
+
+        for (int i = 0; i < 6; i++) totalJagness += jagnesses[i] / 6;
+
         float minWallDist = maxDistance;
         /* REVERB TIME */
 
@@ -140,7 +146,35 @@ public class DetectingWall : MonoBehaviour
         /* LATE DELAY */
 
         float lateDelay =(reverbTime * 0.5f);
-        lateDelayText.text = $"LateDleay is: {lateDelay}";
+        
+
+        /* DIFFUSION */
+
+        float diffusion = totalJagness;
+
+        /* DENSITY */
+
+        float density = totalJagness*totalHardness;
+
+        
+
+
+        /* HF DECAY */
+
+        float hfDecayRatio = totalHardness;
+
+        /* HF REFERENCE */
+
+        float hfReference = totalHardness;
+
+        /* HIGH CUT */
+
+        float highCut = totalDistances;
+
+        /* EARLY LATE MIX */
+
+        float delayMix = totalDistances;
+
         /* REVERB ON OF */
 
         int onOF = 1;
@@ -153,9 +187,9 @@ public class DetectingWall : MonoBehaviour
         {
             onOF = 0;   
         }
+        lateDelayText.text = $"LateDleay is: {lateDelay} Diffusion: {diffusion} Density {density} HF Decay: {hfDecayRatio} HF Reference {hfReference} HighCut: {highCut}";
 
-  
-        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay,onOF);
+        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay,onOF, diffusion,density,hfDecayRatio,hfReference,highCut,delayMix);
 
 
     }
@@ -175,17 +209,19 @@ public class DetectingWall : MonoBehaviour
                 distances[i] = hit.distance;
                 string hitTag = hit.collider.tag;
                 //Debug.DrawRay(origin, hit.point, s.color);
-                if (hardnessLookup.TryGetValue(hitTag, out float matHardness))
-                {
-                     hardnesses[i] = matHardness;
-                     s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]}";
+                if (hardnessLookup.TryGetValue(hitTag, out MaterialData data))
+                { 
+                    hardnesses[i] = data.hardness;
+                    jagnesses[i]= data.jagness;
                 }
-                    
+              
+                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]}";
             }
             else
             {
                 hardnesses[i] = 0;
                 distances[i] = 0;
+                jagnesses[i ] = 0;
                 s.ui.text = $"{s.name} Distance: {distances[i]}";
                // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
             }

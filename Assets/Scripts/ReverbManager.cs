@@ -21,12 +21,17 @@ public class ReverbManager : MonoBehaviour
 
 
 
-    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF)
+    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix)
     {
         RuntimeManager.StudioSystem.setParameterByName("reverbTime", avRoomSize);
         RuntimeManager.StudioSystem.setParameterByName("earlyDelay", earlyDelay);
         RuntimeManager.StudioSystem.setParameterByName("lateDelay", lateDelay);
         RuntimeManager.StudioSystem.setParameterByName("onOF", onOF);
-
+        RuntimeManager.StudioSystem.setParameterByName("diffusion", diffusion);
+        RuntimeManager.StudioSystem.setParameterByName("density", density);
+        RuntimeManager.StudioSystem.setParameterByName("hfDecayRatio", hfDecayRatio);
+        RuntimeManager.StudioSystem.setParameterByName("hfReference", hfReference);
+        RuntimeManager.StudioSystem.setParameterByName("highCut", highCut);
+        RuntimeManager.StudioSystem.setParameterByName("delayMix", delayMix);
     }
 }
