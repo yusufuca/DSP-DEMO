@@ -16,6 +16,10 @@ TagManager:
   - wallDiagonalConcrete
   - wallJagged
   - wallDiagonalJagged
+  - wallWood
+  - wallDiagonalWood
+  - wallMarble
+  - wallDiagonalMarble
   layers:
   - Default
   - TransparentFX

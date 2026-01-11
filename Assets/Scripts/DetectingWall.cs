@@ -6,6 +6,9 @@ using FMODUnity;
 using FMOD.Studio;
 using System;
 using UnityEngine.InputSystem;
+using System.Linq;
+using System.Runtime.InteropServices;
+using Unity.VisualScripting;
 
 public class DetectingWall : MonoBehaviour
 {
@@ -13,18 +16,9 @@ public class DetectingWall : MonoBehaviour
     public EventReference clapSFX;
     
     [Header("Prefabs")]
-    public string solidWall = "wallSolid";
-    public string diagonalWall = "wallDiagonal";
-    public string windowWall = "wallWindow";
-    public string doorWall = "wallDoor";
-    public string ceiling = "ceiling";
-    public string plane = "plane";
-    public string floor = "floor";
+   
     public float maxDistance = 20f;
-
-
-
-
+  
     [Header("Text")]
     public TextMeshProUGUI frontText;
     public TextMeshProUGUI backText;
@@ -32,31 +26,33 @@ public class DetectingWall : MonoBehaviour
     public TextMeshProUGUI rightText;
     public TextMeshProUGUI upText;
     public TextMeshProUGUI downText;
+    public TextMeshProUGUI reverbTimeText;
+    public TextMeshProUGUI earlyDelayText;
+    public TextMeshProUGUI lateDelayText;
 
-    float fDistance;
-    float bDistance;
-    float rDistance;
-    float lDistance;
-    float uDistance;
-    float dDistance;
 
     /*MATERIAL HARDNESS*/
 
+
+    [Header("MaterialData")]
+
+    public List<MaterialData> definedMaterials = new List<MaterialData> ();
+
+    [System.Serializable]
+    public struct MaterialData
+    {
+        public string tag;
+        public float hardness;
+    }
    
 
-    private float hardnessJagged = 1f;
-
-    private float hardnessMarble = 2f;
-
-    private float hardnessWood = 0.5f;
-
-    private float hardnessConcrete = 1.5f;
-
-    /*                             */
-
+   
     private float[] distances = new float[6];
+    private float[] hardnesses = new float[6];
     private Sensor[] sensors;
     private float materialHardness = 1f;
+
+    private Dictionary<string, float> hardnessLookup = new Dictionary<string, float>();
 
     private struct Sensor
     {
@@ -69,13 +65,21 @@ public class DetectingWall : MonoBehaviour
     {
         sensors = new Sensor[]
         {
-            new Sensor { name="Front", dir=transform.forward,  ui=frontText, color=Color.green },   // Index 0
-            new Sensor { name="Back",  dir=-transform.forward, ui=backText,  color=Color.red },     // Index 1
-            new Sensor { name="Right", dir=transform.right,    ui=rightText, color=Color.blue },    // Index 2
-            new Sensor { name="Left",  dir=-transform.right,   ui=leftText,  color=Color.magenta }, // Index 3
-            new Sensor { name="Up",    dir=transform.up,       ui=upText,    color=Color.yellow },  // Index 4
-            new Sensor { name="Down",  dir=-transform.up,      ui=downText,  color=Color.white }    // Index 5
+            new Sensor { name="Front", dir=Vector3.forward,  ui=frontText, color=Color.green },   // Index 0
+            new Sensor { name="Back",  dir=Vector3.back, ui=backText,  color=Color.red },     // Index 1
+            new Sensor { name="Right", dir=Vector3.right,    ui=rightText, color=Color.blue },    // Index 2
+            new Sensor { name="Left",  dir=Vector3.left,   ui=leftText,  color=Color.magenta }, // Index 3
+            new Sensor { name="Up",    dir=Vector3.up,       ui=upText,    color=Color.yellow },  // Index 4
+            new Sensor { name="Down",  dir=Vector3.down,      ui=downText,  color=Color.white }    // Index 5
         };
+
+        foreach (var mat in definedMaterials)
+        {
+            if (!hardnessLookup.ContainsKey(mat.tag))
+            {
+                hardnessLookup.Add(mat.tag, mat.hardness);
+            }
+        }
     }
     private void Update()
     {
@@ -97,25 +101,72 @@ public class DetectingWall : MonoBehaviour
 
     void ParameterUpdater()
     {
+
+
+        float totalDistances = 0f;
+
+        for (int i = 0; i < 6; i++) totalDistances += distances[i];
+
+        float totalHardness = 0f;
+
+        for (int i = 0; i < 6; i++) totalHardness += hardnesses[i];
+
+
         /* REVERB TIME */
 
-        float reverbTime = ((fDistance + bDistance + lDistance + rDistance + uDistance + dDistance) / 6) * materialHardness;
-        
+
+        float reverbTime = (totalDistances * totalHardness) / 6;
+
+        reverbTimeText.text = $"ReverbTime is: {reverbTime}"; 
 
         /* EARLY DELAY */
 
-        float earlyDelay = Mathf.Min(fDistance, Mathf.Min(bDistance, Mathf.Min(lDistance, rDistance)));
+        float earlyDelay = distances.Where(d => d > 0).DefaultIfEmpty(maxDistance).Min();
+
+        earlyDelayText.text = $"EarlyDelay is: {earlyDelay}";
 
         /* LATE DELAY */
 
         float lateDelay = earlyDelay + (reverbTime * 0.5f);
 
-
+        lateDelayText.text = $"LateDleay is: {lateDelay}";
         ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay);
+
+
     }
 
-
     void DetectWall()
+    {
+        for (int i = 0; i < sensors.Length; i++)
+        {
+            Vector3 origin = transform.position + (Vector3.up);
+            Sensor s = sensors[i];
+            distances[i] = maxDistance;
+            Vector3 currentWorldDir = transform.TransformDirection(s.dir);
+
+            if (Physics.Raycast(origin, currentWorldDir, out RaycastHit hit, maxDistance))
+            {
+                
+                distances[i] = hit.distance;
+                string hitTag = hit.collider.tag;
+     
+                    if (hardnessLookup.TryGetValue(hitTag, out float matHardness))
+                    {
+                        hardnesses[i] = matHardness;
+                        s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]}";
+                    }
+
+            }
+            else
+            {
+                hardnesses[i] = 0;
+                distances[i] = 0;
+                s.ui.text = $"{s.name} Distance: Null";
+            }
+        }
+    }
+
+  /*  void DetectWall()
     {
         Vector3 origin = transform.position + (Vector3.up);
         fDistance = maxDistance;
@@ -353,6 +404,6 @@ public class DetectingWall : MonoBehaviour
 
 
     }
-
+  */
 
 }
