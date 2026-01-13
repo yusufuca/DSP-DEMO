@@ -21,6 +21,8 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         }
     }
 
+    public bool EnableDiagonals = true;
+
     [Header("Prefabs")]
     public GameObject floorPrefab;
     public GameObject ceilingPrefab;
@@ -51,12 +53,12 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     public GameObject wallJagged;
     public GameObject wallDiagonalJagged;
 
+
+
+
+
+    public GameObject nextPrefab;
     
-
-
-
-    private GameObject nextPrefab;
-
     public int roomSize = 10;
     public int wallHeight = 4;
     public int wallWidth = 4;
@@ -73,13 +75,13 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     private HashSet<Vector2Int> pickedTiles = new HashSet<Vector2Int>();
     private List<GameObject> spawnedObjects = new List<GameObject>();
 
-    
+    private bool isDoorSpawned = false;
 
     private void Start()
     {
         GenerateSeed();
-  
-            
+       
+
     }
 
     void GenerateSeed()
@@ -99,11 +101,15 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     public void GenerateHouse(Vector2Int pos)
     {
-
+       
         int houseSpecificSeed = gameSeed + (pos.x * 1000) + (pos.y * 100);
         rng = new System.Random(houseSpecificSeed);
 
+      
+
         ClearHouse();
+        isDoorSpawned = false;
+        NextPrefabPicker();
         GenerateTileMap(pos);
         
 
@@ -147,7 +153,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     void CheckAndSpawn(Vector2Int pos)
     {
-        int ws = wallWidth / 2;
+        int ws = wallWidth /2;
         
         bool left = pickedTiles.Contains(pos + Vector2Int.left);
         bool right = pickedTiles.Contains(pos + Vector2Int.right);
@@ -164,65 +170,68 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
         //Diagonal Walls
 
+        if (EnableDiagonals)
+        {
+            //up left corner
+            if (!up && !left && rng.Next(0, 100) < diagonalChance)
+            {
+                SpawnDiagonalWalls(pos, 315);
+                blockUp = true;
+                blockLeft = true;
+
+                isDiagonal = true;
+                rot = 315;
+            }
+            //up right corner
+            if (!up && !right && rng.Next(0, 100) < diagonalChance)
+            {
+                SpawnDiagonalWalls(pos, 45);
+                blockUp = true;
+                blockRight = true;
+
+                isDiagonal = true;
+                rot = 45;
+            }
+            // down left corner
+            if (!down && !left && rng.Next(0, 100) < diagonalChance)
+            {
+                SpawnDiagonalWalls(pos, 225);
+                blockDown = true;
+                blockLeft = true;
+
+                isDiagonal = true;
+                rot = 225;
+            }
+
+            // down right corner
+            if (!down && !right && rng.Next(0, 100) < diagonalChance)
+            {
+                SpawnDiagonalWalls(pos, 135);
+                blockDown = true;
+                blockRight = true;
+
+                isDiagonal = true;
+                rot = 135;
+            }
+        }
+            if (isDiagonal)
+            {
+                SpawnDiagonalCeiling(pos, rot);
+                SpawnDiagonalFloor(pos, rot);
+            }
+            else
+            {
+                SpawnCeiling(pos);
+                SpawnFloor(pos);
+            }
+
         
-        //up left corner
-        if(!up && !left && rng.Next(0,100) < diagonalChance)
-        {
-            SpawnDiagonalWalls(pos, 315);
-            blockUp = true;
-            blockLeft = true;
-
-            isDiagonal = true;
-            rot = 315;
-        } 
-        //up right corner
-        if(!up && !right && rng.Next(0,100)<diagonalChance)
-        {
-            SpawnDiagonalWalls(pos, 45);
-            blockUp= true;
-            blockRight = true;
-
-            isDiagonal = true;
-            rot = 45;
-        }
-        // down left corner
-        if (!down && !left && rng.Next(0, 100) < diagonalChance)
-        {
-            SpawnDiagonalWalls(pos, 225);
-            blockDown= true;
-            blockLeft = true;
-
-            isDiagonal = true;
-            rot = 225;
-        }
-
-        // down right corner
-        if (!down && !right && rng.Next(0, 100) < diagonalChance)
-        {
-            SpawnDiagonalWalls(pos, 135);
-            blockDown = true;
-            blockRight = true;
-
-            isDiagonal = true;
-            rot = 135;
-        }
-
-        if (isDiagonal)
-        {
-            SpawnDiagonalCeiling(pos,rot);
-            SpawnDiagonalFloor(pos,rot);
-        }
-        else
-        {
-            SpawnCeiling(pos);
-            SpawnFloor(pos);
-        }
-
-
 
 
 
         //Straight Walls
+
+       
 
         if (!left && !blockLeft) { SpawnWalls(pos, 270, ws * Vector3.left); }
         if (!right && !blockRight) { SpawnWalls(pos, 90, ws * Vector3.right); }
@@ -232,20 +241,36 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
     }
 
+    void NextPrefabPicker()
+    {
 
+
+        if (!isDoorSpawned)
+        {
+            nextPrefab = wallDoorPrefab;
+            isDoorSpawned = true;
+        }
+        else
+        {
+
+
+            if (rng.Next(0, 100) > 10)
+            {
+                nextPrefab = wallSolidPrefab;
+            }
+            else
+            {
+                nextPrefab = wallWindowPrefab;
+            }
+
+        }
+    }
 
     private void SpawnWalls(Vector2Int tilepos, float rot,Vector3 offset)
     {
-        nextPrefab = wallDoorPrefab;
 
-        if (rng.Next(0, 100) <= 75 && nextPrefab == wallDoorPrefab)
-        {
-            nextPrefab = wallSolidPrefab;
-        }
-        else if (rng.Next(0, 100) > 75 && nextPrefab == wallDoorPrefab)
-        {
-            nextPrefab = wallWindowPrefab;
-        }
+        
+
 
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
         Vector3 finalPos = worldPos + offset;
@@ -253,7 +278,9 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         GameObject obj = Instantiate(nextPrefab, finalPos, rotation, transform);
         spawnedObjects.Add(obj);
 
-        nextPrefab = null;
+        NextPrefabPicker();
+        
+
     }
     private void SpawnDiagonalWalls(Vector2Int tilepos, float rot)
     {

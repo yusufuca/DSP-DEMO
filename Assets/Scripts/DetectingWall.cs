@@ -9,6 +9,7 @@ using UnityEngine.InputSystem;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Unity.VisualScripting;
+using Unity.Mathematics;
 
 public class DetectingWall : MonoBehaviour
 {
@@ -56,6 +57,9 @@ public class DetectingWall : MonoBehaviour
     private Sensor[] sensors;
 
 
+    public bool isComplexShape = false;
+    public string shapeType = "box";
+
     private Dictionary<string, MaterialData> hardnessLookup = new Dictionary<string, MaterialData>();
 
     private struct Sensor
@@ -88,6 +92,7 @@ public class DetectingWall : MonoBehaviour
     private void Update()
     {
         DetectWall();
+        AnalyzeShape();
         if (Input.GetKeyDown(KeyCode.E))
         { 
             Clapping(); 
@@ -131,7 +136,7 @@ public class DetectingWall : MonoBehaviour
 
         float reverbTime = roomSize * totalHardness;
 
-        reverbTimeText.text = $"ReverbTime is: {reverbTime}"; 
+        reverbTimeText.text = $"ReverbTime is: {reverbTime} Room Shape is {shapeType}"; 
 
         /* EARLY DELAY */
 
@@ -236,13 +241,14 @@ public class DetectingWall : MonoBehaviour
                 Vector3 wallRight = hit.transform.right;
                 Vector3 wallUp = hit.transform.up;
 
+                Quaternion wallRot = hit.transform.rotation;
               
                 
 
-                float upNeighbors = CheckNeighbors(checkPosOrigin, wallUp);
-                float downNeighbors = CheckNeighbors(checkPosOrigin, -wallUp);
-                float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight);
-                float leftNeighbors = CheckNeighbors(checkPosOrigin,-wallRight);
+                float upNeighbors = CheckNeighbors(checkPosOrigin, wallUp, wallRot);
+                float downNeighbors = CheckNeighbors(checkPosOrigin, -wallUp,wallRot);
+                float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight, wallRot);
+                float leftNeighbors = CheckNeighbors(checkPosOrigin,-wallRight, wallRot);
 
                 totalHeight[i] = 4f + upNeighbors + downNeighbors;
                 totalLength[i] = 4f + rightNeighbors + leftNeighbors;
@@ -269,276 +275,138 @@ public class DetectingWall : MonoBehaviour
             
         }
 
-        float CheckNeighbors(Vector3 checkPosOrigin,Vector3 checkDirection)
-        {
-          
-            Vector3 currentCheckPos = checkPosOrigin;
-
-            float extraLength = 0f;
-            
-            int limitCheck = 0;
-            while (limitCheck < 20)
-            {
-               limitCheck++;
-                
-                Vector3 boxSize = new Vector3(1.9f, 1.9f, 0.9f);
-                currentCheckPos += checkDirection * 4.0f;
-                Collider[] neighbors = Physics.OverlapBox(currentCheckPos, boxSize, Quaternion.identity, WallLayer);
-
-                if (neighbors.Length > 0) 
-                {
-                    extraLength += 4f;
-                }
-                else
-                {
-                    break;
-                }
-                
-            }
-            return extraLength;
-            // Debug.Log($"{s.name} neighborCount: {neighbors.Length}");
-        }
+        
     }
-   
-
-  /*  void DetectWall()
+    float CheckNeighbors(Vector3 checkPosOrigin, Vector3 checkDirection, Quaternion boxRot)
     {
-        Vector3 origin = transform.position + (Vector3.up);
-        fDistance = maxDistance;
-        bDistance = maxDistance;
-        rDistance = maxDistance;
-        lDistance = maxDistance;
-        uDistance = maxDistance;
-        dDistance = maxDistance;
-        //   Front
 
-        if (Physics.Raycast(origin, transform.forward, out RaycastHit hitFront, maxDistance))
+        Vector3 currentCheckPos = checkPosOrigin;
+
+        float extraLength = 0f;
+
+        int limitCheck = 0;
+        Vector3 boxSize = new Vector3(1.9f, 1.9f, 0.9f);
+
+        while (limitCheck < 20)
         {
+            limitCheck++;
+            currentCheckPos += checkDirection * 4.0f;
 
-            fDistance = hitFront.distance;
 
-            if (hitFront.collider.CompareTag(solidWall))
+            Collider[] neighbors = Physics.OverlapBox(currentCheckPos, boxSize, boxRot, WallLayer);
+
+            bool foundValidNeighbor = false;
+
+            foreach (Collider col in neighbors)
             {
-                frontText.text = "Front SolidWall Detected Distance: " + fDistance;
-                Debug.Log("SolidWall Detected front. Distance =" + fDistance);
-                Debug.DrawLine(origin, hitFront.point, Color.green);
+
+                float angleDiff = Quaternion.Angle(boxRot, col.transform.rotation);
+
+                if (angleDiff < 5f)
+                {
+                    foundValidNeighbor = true;
+                    break;
+
+
+                }
+
             }
-            else if (hitFront.collider.CompareTag(diagonalWall))
+
+            if (foundValidNeighbor)
             {
-                frontText.text = "Front DiagonalWall Detected Distance: " + fDistance;
-                Debug.Log("DiagonalWall Detected front. Distance =" + fDistance);
-                Debug.DrawLine(origin, hitFront.point, Color.green);
+
+                extraLength += 4f;
+                DrawDebugBox(currentCheckPos, boxSize, boxRot, Color.green);
+
+
+
             }
-            else if (hitFront.collider.CompareTag(windowWall))
+            else
             {
-                frontText.text = "Front Window Detected Distance: " + fDistance;
-                Debug.Log("WindowWall Detected front. Distance =" + fDistance);
-                Debug.DrawLine(origin, hitFront.point, Color.green);
-            }
-            else if (hitFront.collider.CompareTag(doorWall))
-            {
-                frontText.text = "Front Door Detected Distance: " + fDistance;
-                Debug.Log("DoorWall Detected front. Distance =" + fDistance);
-                Debug.DrawLine(origin, hitFront.point, Color.green);
+                //DrawRotatedBox(currentCheckPos, boxSize, boxRot, Color.red);
+                break;
             }
 
         }
-        else
-        {
-            fDistance = 0;
-            frontText.text = "Front Distance: Null";
-            Debug.Log("Nothing front");
-            Debug.DrawLine(origin, hitFront.point, Color.green);
-
-        }
-
-        // Back
-
-
-        if (Physics.Raycast(origin, -transform.forward, out RaycastHit hitBack, maxDistance))
-        {
-            bDistance = hitBack.distance;
-
-
-            if (hitBack.collider.CompareTag(solidWall))
-            {
-                backText.text = "Back SolidWall Detected Distance: " + bDistance;
-                Debug.Log("SolidWall Detected back. Distance =" + bDistance);
-                Debug.DrawLine(origin, hitBack.point, Color.red);
-            }
-            else if (hitBack.collider.CompareTag(diagonalWall))
-            {
-                backText.text = "Back Diagonal Detected Distance: " + bDistance;
-                Debug.Log("DiagonalWall Detected back. Distance =" + bDistance);
-                Debug.DrawLine(origin, hitBack.point, Color.red);
-            }
-            else if (hitBack.collider.CompareTag(windowWall))
-            {
-                backText.text = "Back Window Detected Distance: " + bDistance;
-                Debug.Log("WindowWall Detected back. Distance =" + bDistance);
-                Debug.DrawLine(origin, hitBack.point, Color.red);
-            }
-            else if (hitBack.collider.CompareTag(doorWall))
-            {
-                backText.text = "Back Door Detected Distance: " + bDistance;
-                Debug.Log("DoorWall Detected back. Distance =" + bDistance);
-                Debug.DrawLine(origin, hitBack.point, Color.red);
-            }
-
-        }
-        else
-        {
-            bDistance = 0;
-            backText.text = "Back Distance: Null";
-            Debug.Log("Nothing back");
-            Debug.DrawLine(origin, hitBack.point, Color.red);
-        }
-
-        // Right
-
-
-        if (Physics.Raycast(origin, transform.right, out RaycastHit hitRight, maxDistance))
-        {
-            rDistance = hitRight.distance;
-
-            if (hitRight.collider.CompareTag(solidWall))
-            {
-                rightText.text = "Right SolidWall Detected Distance: " + rDistance;
-                Debug.Log("SolidWall Detected right. Distance =" + rDistance);
-                Debug.DrawLine(origin, hitRight.point, Color.blue);
-            }
-            else if (hitRight.collider.CompareTag(diagonalWall))
-            {
-                rightText.text = "Right DiagonalWall Detected Distance: " + rDistance;
-                Debug.Log("DiagonalWall Detected right. Distance =" + rDistance);
-                Debug.DrawLine(origin, hitRight.point, Color.blue);
-            }
-            else if (hitRight.collider.CompareTag(windowWall))
-            {
-                rightText.text = "Right Window Detected Distance: " + rDistance;
-                Debug.Log("WindowWall Detected right. Distance =" + rDistance);
-                Debug.DrawLine(origin, hitRight.point, Color.blue);
-            }
-            else if (hitRight.collider.CompareTag(doorWall))
-            {
-                rightText.text = "Right Door Detected Distance: " + rDistance;
-                Debug.Log("DoorWall Detected right. Distance =" + rDistance);
-                Debug.DrawLine(origin, hitRight.point, Color.blue);
-            }
-
-        }
-        else
-        {
-            rDistance = 0;
-            rightText.text = "Right Distance: Null";
-            Debug.Log("Nothing right");
-            Debug.DrawLine(origin, hitRight.point, Color.blue);
-        }
-
-        //  Left
-
-        if (Physics.Raycast(origin, -transform.right, out RaycastHit hitLeft, maxDistance))
-        {
-            lDistance = hitLeft.distance;
-
-            if (hitLeft.collider.CompareTag(solidWall))
-            {
-                leftText.text = "Left SolidWall Detected Distance: " + lDistance;
-                Debug.Log("SolidWall Detected Left. Distance =" + lDistance);
-                Debug.DrawLine(origin, hitLeft.point, Color.magenta);
-            }
-            else if (hitLeft.collider.CompareTag(diagonalWall))
-            {
-                leftText.text = "Left DiagonalWall Detected Distance: " + lDistance;
-                Debug.Log("DiagonalWall Detected Left. Distance =" + lDistance);
-                Debug.DrawLine(origin, hitLeft.point, Color.magenta);
-            }
-            else if (hitLeft.collider.CompareTag(windowWall))
-            {
-                leftText.text = "Left Window Detected Distance: " + lDistance;
-                Debug.Log("WindowWall Detected Left. Distance =" + lDistance);
-                Debug.DrawLine(origin, hitLeft.point, Color.magenta);
-            }
-            else if (hitLeft.collider.CompareTag(doorWall))
-            {
-                leftText.text = "Left Door Detected Distance: " + lDistance;
-                Debug.Log("DoorWall Detected Left. Distance =" + lDistance);
-                Debug.DrawLine(origin, hitLeft.point, Color.magenta);
-            }
-
-        }
-        else
-        {
-            lDistance = 0;
-            Debug.Log("Nothing Left");
-            leftText.text = "Left Distance: Null";
-            Debug.DrawLine(origin, hitLeft.point, Color.magenta);
-        }
-
-        // UP
-
-        if (Physics.Raycast(origin, transform.up, out RaycastHit hitUp, maxDistance))
-        {
-            uDistance = hitUp.distance;
-
-            if (hitUp.collider.CompareTag(floor))
-            {
-                upText.text = "Up Floor Detected Distance: " + uDistance;
-                
-                Debug.DrawLine(origin, hitUp.point, Color.magenta);
-            }
-            
-            else if (hitUp.collider.CompareTag(ceiling))
-            {
-                upText.text = "Up Ceiling Detected Distance: " + uDistance;
-                Debug.DrawLine(origin, hitUp.point, Color.magenta);
-            }
-
-        }
-        else
-        {
-            uDistance = 0;
-            
-            upText.text = "Up Distance: Null";
-            Debug.DrawLine(origin, hitUp.point, Color.magenta);
-        }
-
-        // DOWN
-
-        if (Physics.Raycast(origin, -transform.up, out RaycastHit hitDown, maxDistance))
-        {
-            dDistance = hitDown.distance;
-
-            if (hitDown.collider.CompareTag(plane))
-            {
-                downText.text = "Down plane Detected Distance: " + dDistance;
-
-                Debug.DrawLine(origin, hitDown.point, Color.white);
-            }
-
-            else if (hitDown.collider.CompareTag(ceiling))
-            {
-                downText.text = "Down Ceiling Detected Distance: " + dDistance;
-                Debug.DrawLine(origin, hitDown.point, Color.magenta);
-            }
-            else if (hitDown.collider.CompareTag(floor))
-            {
-                downText.text = "Down Floor Detected Distance: " + dDistance;
-                Debug.DrawLine(origin, hitDown.point, Color.magenta);
-            }
-
-        }
-        else
-        {
-            dDistance = 0;
-
-            downText.text = "Down Distance: Null";
-            Debug.DrawLine(origin, hitDown.point, Color.magenta);
-        }
-
-
+        return extraLength;
 
     }
-  */
+    void DrawDebugBox(Vector3 center, Vector3 halfExtents, Quaternion rotation, Color color)
+    {
+       
+        Vector3 size = halfExtents * 2f;
+
+      
+        Vector3[] points = new Vector3[8];
+        points[0] = center + rotation * new Vector3(size.x, size.y, size.z) * 0.5f;
+        points[1] = center + rotation * new Vector3(-size.x, size.y, size.z) * 0.5f;
+        points[2] = center + rotation * new Vector3(-size.x, -size.y, size.z) * 0.5f;
+        points[3] = center + rotation * new Vector3(size.x, -size.y, size.z) * 0.5f;
+        points[4] = center + rotation * new Vector3(size.x, size.y, -size.z) * 0.5f;
+        points[5] = center + rotation * new Vector3(-size.x, size.y, -size.z) * 0.5f;
+        points[6] = center + rotation * new Vector3(-size.x, -size.y, -size.z) * 0.5f;
+        points[7] = center + rotation * new Vector3(size.x, -size.y, -size.z) * 0.5f;
+
+       
+        Debug.DrawLine(points[0], points[1], color); Debug.DrawLine(points[1], points[2], color);
+        Debug.DrawLine(points[2], points[3], color); Debug.DrawLine(points[3], points[0], color);
+
+        Debug.DrawLine(points[4], points[5], color); Debug.DrawLine(points[5], points[6], color);
+        Debug.DrawLine(points[6], points[7], color); Debug.DrawLine(points[7], points[4], color);
+
+        Debug.DrawLine(points[0], points[4], color); Debug.DrawLine(points[1], points[5], color);
+        Debug.DrawLine(points[2], points[6], color); Debug.DrawLine(points[3], points[7], color);
+    }
+
+    void AnalyzeShape()
+    {
+
+        float roomDepth = distances[0] + distances[1];
+        float roomWidth = distances[2] + distances[3];
+
+        float frontWallLength = totalLength[0];
+        float backWallLength = totalLength[1];
+        float rightWallLength = totalLength[2];
+        float leftWallLength = totalLength[3];
+
+        float gapThreshold = 2f;
+
+        bool gapOnLeft = (roomDepth > leftWallLength+gapThreshold);
+        bool gapOnRight = (roomDepth > rightWallLength + gapThreshold);
+        bool gapOnFront = (roomWidth > frontWallLength+gapThreshold);
+        bool gapOnBack = (roomWidth > backWallLength + gapThreshold);
+
+        int gapCount = 0;
+        if (gapOnLeft) gapCount++;
+        if (gapOnRight) gapCount++;
+        if (gapOnFront) gapCount++;
+        if (gapOnBack) gapCount++;
+
+        if (gapCount == 0)
+        {
+            shapeType = "SimpleBox";
+            isComplexShape=false;
+                
+        }
+        else if (gapCount == 1)
+        {
+            shapeType = "L Shaped Room";
+            isComplexShape=true;
+        }
+        else if (gapCount >= 2)
+        {
+            if (gapOnLeft && gapOnRight)
+            {
+                shapeType = "T Shaped Room";
+                isComplexShape=true;
+            }
+            else 
+            {
+                shapeType = "W Shaped Room";
+            }
+        }
+    }
+
+
 
 }
