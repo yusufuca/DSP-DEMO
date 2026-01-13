@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4326235457872754110}
   - component: {fileID: 8945550061556681566}
   - component: {fileID: 6373831684857491728}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: WallSolid
   m_TagString: wallWood
   m_Icon: {fileID: 0}

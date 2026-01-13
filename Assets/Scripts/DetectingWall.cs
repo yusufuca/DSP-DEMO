@@ -45,8 +45,8 @@ public class DetectingWall : MonoBehaviour
         public float hardness;
         public float jagness;
     }
-   
 
+    public LayerMask WallLayer;
    
     private float[] distances = new float[6];
     private float[] hardnesses = new float[6];
@@ -208,14 +208,29 @@ public class DetectingWall : MonoBehaviour
                 
                 distances[i] = hit.distance;
                 string hitTag = hit.collider.tag;
-                //Debug.DrawRay(origin, hit.point, s.color);
+                
+                Vector3 checkPosOrigin = hit.transform.position;
+                Vector3 wallRight = hit.transform.right;
+                Vector3 wallUp = hit.transform.up;
+
+              
+                
+
+                float upNeighbors = CheckNeighbors(checkPosOrigin, wallUp);
+                float downNeighbors = CheckNeighbors(checkPosOrigin, -wallUp);
+                float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight);
+                float leftNeighbors = CheckNeighbors(checkPosOrigin,-wallRight);
+
+                float totalHeight = 4f + upNeighbors + downNeighbors;
+                float totalLength = 4f + rightNeighbors + leftNeighbors;
+
                 if (hardnessLookup.TryGetValue(hitTag, out MaterialData data))
-                { 
+                {
                     hardnesses[i] = data.hardness;
-                    jagnesses[i]= data.jagness;
+                    jagnesses[i] = data.jagness;
                 }
               
-                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]}";
+                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]} Height:{totalHeight}m Length:{totalLength}m";
             }
             else
             {
@@ -227,7 +242,38 @@ public class DetectingWall : MonoBehaviour
             }
             
         }
+
+        float CheckNeighbors(Vector3 checkPosOrigin,Vector3 checkDirection)
+        {
+          
+            Vector3 currentCheckPos = checkPosOrigin;
+
+            float extraLength = 0f;
+            
+            int limitCheck = 0;
+            while (limitCheck < 20)
+            {
+               limitCheck++;
+                
+                Vector3 boxSize = new Vector3(1.9f, 1.9f, 0.9f);
+                currentCheckPos += checkDirection * 4.0f;
+                Collider[] neighbors = Physics.OverlapBox(currentCheckPos, boxSize, Quaternion.identity, WallLayer);
+
+                if (neighbors.Length > 0) 
+                {
+                    extraLength += 4f;
+                }
+                else
+                {
+                    break;
+                }
+                
+            }
+            return extraLength;
+            // Debug.Log($"{s.name} neighborCount: {neighbors.Length}");
+        }
     }
+   
 
   /*  void DetectWall()
     {
