@@ -49,6 +49,8 @@ public class DetectingWall : MonoBehaviour
     public LayerMask WallLayer;
    
     private float[] distances = new float[6];
+    private float[] totalHeight = new float[6];
+    private float[] totalLength = new float[6];
     private float[] hardnesses = new float[6];
     private float[] jagnesses = new float[6];
     private Sensor[] sensors;
@@ -68,11 +70,11 @@ public class DetectingWall : MonoBehaviour
         sensors = new Sensor[]
         {
             new Sensor { name="Front", dir=Vector3.forward,  ui=frontText, color=Color.green },   // Index 0
-            new Sensor { name="Back",  dir=Vector3.back, ui=backText,  color=Color.red },     // Index 1
+            new Sensor { name="Back",  dir=Vector3.back, ui=backText,  color=Color.green },     // Index 1
             new Sensor { name="Right", dir=Vector3.right,    ui=rightText, color=Color.blue },    // Index 2
-            new Sensor { name="Left",  dir=Vector3.left,   ui=leftText,  color=Color.magenta }, // Index 3
+            new Sensor { name="Left",  dir=Vector3.left,   ui=leftText,  color=Color.blue}, // Index 3
             new Sensor { name="Up",    dir=Vector3.up,       ui=upText,    color=Color.yellow },  // Index 4
-            new Sensor { name="Down",  dir=Vector3.down,      ui=downText,  color=Color.white }    // Index 5
+            new Sensor { name="Down",  dir=Vector3.down,      ui=downText,  color=Color.yellow }    // Index 5
         };
 
         foreach (var mat in definedMaterials)
@@ -117,11 +119,17 @@ public class DetectingWall : MonoBehaviour
 
         for (int i = 0; i < 6; i++) totalJagness += jagnesses[i] / 6;
 
+        float roomSize = 0f;
+
+        for (int i = 0; i < 4; i++) roomSize += ((totalLength[i] + totalHeight[i]) /4);
+
         float minWallDist = maxDistance;
         /* REVERB TIME */
 
 
-        float reverbTime = (totalDistances * totalHardness);
+        //float reverbTime = (totalDistances * totalHardness);
+
+        float reverbTime = roomSize * totalHardness;
 
         reverbTimeText.text = $"ReverbTime is: {reverbTime}"; 
 
@@ -201,7 +209,22 @@ public class DetectingWall : MonoBehaviour
             Vector3 origin = transform.position + (Vector3.up);
             Sensor s = sensors[i];
             distances[i] = maxDistance;
+            
             Vector3 currentWorldDir = transform.TransformDirection(s.dir);
+            Vector3 rawDir= currentWorldDir;
+
+            if(s.name!="Up" && s.name != "Down")
+            {
+                if (Mathf.Abs(rawDir.x) > Mathf.Abs(rawDir.z))
+                {
+                    currentWorldDir = new Vector3(Mathf.Sign(rawDir.x), 0, 0);
+                }
+                else
+                {
+                    currentWorldDir = new Vector3(0, 0, Mathf.Sign(rawDir.z));
+                }
+            }
+
 
             if (Physics.Raycast(origin, currentWorldDir, out RaycastHit hit, maxDistance))
             {
@@ -221,16 +244,18 @@ public class DetectingWall : MonoBehaviour
                 float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight);
                 float leftNeighbors = CheckNeighbors(checkPosOrigin,-wallRight);
 
-                float totalHeight = 4f + upNeighbors + downNeighbors;
-                float totalLength = 4f + rightNeighbors + leftNeighbors;
+                totalHeight[i] = 4f + upNeighbors + downNeighbors;
+                totalLength[i] = 4f + rightNeighbors + leftNeighbors;
 
                 if (hardnessLookup.TryGetValue(hitTag, out MaterialData data))
                 {
                     hardnesses[i] = data.hardness;
                     jagnesses[i] = data.jagness;
                 }
+
+                Debug.DrawRay(origin, currentWorldDir*maxDistance, s.color);
               
-                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]} Height:{totalHeight}m Length:{totalLength}m";
+                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]} Height:{totalHeight[i]}m Length:{totalLength[i]}m";
             }
             else
             {
@@ -238,7 +263,8 @@ public class DetectingWall : MonoBehaviour
                 distances[i] = 0;
                 jagnesses[i ] = 0;
                 s.ui.text = $"{s.name} Distance: {distances[i]}";
-               // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
+                Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
+                // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
             }
             
         }

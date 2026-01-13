@@ -2,7 +2,7 @@
 - Project name: DSP-DEMO
 - Unity version: Unity 2022.3.62f1
 - Active game object:
-  - Name: CONCRETE (1)
+  - Name: GameObject
   - Tag: Untagged
-  - Layer: Default
+  - Layer: WallLayer
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
