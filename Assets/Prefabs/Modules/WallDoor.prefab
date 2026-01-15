@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8639859628470500525}
   - component: {fileID: 1477303909955014647}
   - component: {fileID: 8834084165589839572}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: WallDoor
   m_TagString: wallDoor
   m_Icon: {fileID: 0}
@@ -703,7 +703,7 @@ GameObject:
   - component: {fileID: 2482888569014772407}
   - component: {fileID: 4316760130679331845}
   - component: {fileID: 4335653388564565409}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -52,15 +52,32 @@ public class DetectingWall : MonoBehaviour
     private float[] distances = new float[6];
     private float[] totalHeight = new float[6];
     private float[] totalLength = new float[6];
+
+   
+
     private float[] hardnesses = new float[6];
     private float[] jagnesses = new float[6];
+    private Vector3[] wallOrigins = new Vector3[6];
+    private Quaternion[] wallRotations = new Quaternion[6];
     private Sensor[] sensors;
 
+    private float totalRoomVolume = 0f;
+    private float totalRoomHardness = 0f;
+    private float totalRoomJagness = 0f;
+    Queue<Vector3> wallQueue = new Queue<Vector3>();
 
-    public bool isComplexShape = false;
-    public string shapeType = "box";
+    HashSet<Vector3> visited = new HashSet<Vector3>();
+    Collider[] resultsBuffer = new Collider[10];
+    public float scanInterval = 1f; 
+    private float scanTimer = 0f;
+
 
     private Dictionary<string, MaterialData> hardnessLookup = new Dictionary<string, MaterialData>();
+
+    private Vector3 gridAnchorPoint = Vector3.zero;
+    private bool hasGridAnchor = false;
+    private float nodeSize = 2f;
+
 
     private struct Sensor
     {
@@ -92,7 +109,16 @@ public class DetectingWall : MonoBehaviour
     private void Update()
     {
         DetectWall();
-        AnalyzeShape();
+        scanTimer += Time.deltaTime;
+        if (scanTimer >= scanInterval)
+        {
+            if (distances[4] > 0 && hasGridAnchor)
+            {
+                FloodFill();
+            }
+            scanTimer = 0;
+        }
+        
         if (Input.GetKeyDown(KeyCode.E))
         { 
             Clapping(); 
@@ -108,6 +134,32 @@ public class DetectingWall : MonoBehaviour
         RuntimeManager.PlayOneShot(clapSFX);
     }
 
+    void DrawDebugBox(Vector3 center, Vector3 halfExtents, Quaternion rotation, Color color)
+    {
+
+        Vector3 size = halfExtents * 2f;
+
+
+        Vector3[] points = new Vector3[8];
+        points[0] = center + rotation * new Vector3(size.x, size.y, size.z) * 0.5f;
+        points[1] = center + rotation * new Vector3(-size.x, size.y, size.z) * 0.5f;
+        points[2] = center + rotation * new Vector3(-size.x, -size.y, size.z) * 0.5f;
+        points[3] = center + rotation * new Vector3(size.x, -size.y, size.z) * 0.5f;
+        points[4] = center + rotation * new Vector3(size.x, size.y, -size.z) * 0.5f;
+        points[5] = center + rotation * new Vector3(-size.x, size.y, -size.z) * 0.5f;
+        points[6] = center + rotation * new Vector3(-size.x, -size.y, -size.z) * 0.5f;
+        points[7] = center + rotation * new Vector3(size.x, -size.y, -size.z) * 0.5f;
+
+
+        Debug.DrawLine(points[0], points[1], color); Debug.DrawLine(points[1], points[2], color);
+        Debug.DrawLine(points[2], points[3], color); Debug.DrawLine(points[3], points[0], color);
+
+        Debug.DrawLine(points[4], points[5], color); Debug.DrawLine(points[5], points[6], color);
+        Debug.DrawLine(points[6], points[7], color); Debug.DrawLine(points[7], points[4], color);
+
+        Debug.DrawLine(points[0], points[4], color); Debug.DrawLine(points[1], points[5], color);
+        Debug.DrawLine(points[2], points[6], color); Debug.DrawLine(points[3], points[7], color);
+    }
     void ParameterUpdater()
     {
 
@@ -124,9 +176,14 @@ public class DetectingWall : MonoBehaviour
 
         for (int i = 0; i < 6; i++) totalJagness += jagnesses[i] / 6;
 
+        float mainRoomVolume = 0f;
+        for (int i = 0; i < 4; i++) mainRoomVolume += ((totalLength[i] * totalHeight[i])/4);
+
         float roomSize = 0f;
 
-        for (int i = 0; i < 4; i++) roomSize += ((totalLength[i] + totalHeight[i]) /4);
+        for (int i = 0; i < 4; i++) roomSize += ((totalLength[i] + totalHeight[i]) /4) ;
+
+        float totalVolume = (roomSize * 4f);
 
         float minWallDist = maxDistance;
         /* REVERB TIME */
@@ -134,9 +191,9 @@ public class DetectingWall : MonoBehaviour
 
         //float reverbTime = (totalDistances * totalHardness);
 
-        float reverbTime = roomSize * totalHardness;
+        float reverbTime = mainRoomVolume * totalHardness;
 
-        reverbTimeText.text = $"ReverbTime is: {reverbTime} Room Shape is {shapeType}"; 
+        reverbTimeText.text = $"ReverbTime is: {reverbTime} TotalRoomVolume: {totalRoomVolume} TotalRoomHardness: {totalRoomHardness} TotalRoomJagness: {totalRoomJagness}"; 
 
         /* EARLY DELAY */
 
@@ -206,7 +263,7 @@ public class DetectingWall : MonoBehaviour
 
 
     }
-
+    
     void DetectWall()
     {
         for (int i = 0; i < sensors.Length; i++)
@@ -233,22 +290,43 @@ public class DetectingWall : MonoBehaviour
 
             if (Physics.Raycast(origin, currentWorldDir, out RaycastHit hit, maxDistance))
             {
-                
+
                 distances[i] = hit.distance;
                 string hitTag = hit.collider.tag;
-                
+
+                wallOrigins[i] = hit.transform.position;
+                wallRotations[i] = hit.transform.rotation;
                 Vector3 checkPosOrigin = hit.transform.position;
                 Vector3 wallRight = hit.transform.right;
                 Vector3 wallUp = hit.transform.up;
 
+                Vector3 wallLeftCorner = hit.transform.right;
+
                 Quaternion wallRot = hit.transform.rotation;
-              
+
+                if (!hasGridAnchor)
+                {
+                    if (distances[0] > 0)
+                    {
+                        gridAnchorPoint = wallOrigins[0];
+                        hasGridAnchor = true;
+                    }
+                }
+
+
+
+
+
+                float upNeighbors = CheckNeighbors(checkPosOrigin, wallUp, wallRot, Color.green, false);
+                float downNeighbors = CheckNeighbors(checkPosOrigin, -wallUp, wallRot, Color.green, false);
+                float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight, wallRot, Color.green, false);
+                float leftNeighbors = CheckNeighbors(checkPosOrigin, -wallRight, wallRot, Color.green, false);
+
                 
 
-                float upNeighbors = CheckNeighbors(checkPosOrigin, wallUp, wallRot);
-                float downNeighbors = CheckNeighbors(checkPosOrigin, -wallUp,wallRot);
-                float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight, wallRot);
-                float leftNeighbors = CheckNeighbors(checkPosOrigin,-wallRight, wallRot);
+
+
+
 
                 totalHeight[i] = 4f + upNeighbors + downNeighbors;
                 totalLength[i] = 4f + rightNeighbors + leftNeighbors;
@@ -259,15 +337,17 @@ public class DetectingWall : MonoBehaviour
                     jagnesses[i] = data.jagness;
                 }
 
-                Debug.DrawRay(origin, currentWorldDir*maxDistance, s.color);
-              
+                Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
+
                 s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]} Height:{totalHeight[i]}m Length:{totalLength[i]}m";
             }
             else
             {
                 hardnesses[i] = 0;
                 distances[i] = 0;
-                jagnesses[i ] = 0;
+                jagnesses[i] = 0;
+                wallOrigins[i] = Vector3.zero;
+                totalLength[i] = 0;
                 s.ui.text = $"{s.name} Distance: {distances[i]}";
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
                 // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
@@ -277,7 +357,7 @@ public class DetectingWall : MonoBehaviour
 
         
     }
-    float CheckNeighbors(Vector3 checkPosOrigin, Vector3 checkDirection, Quaternion boxRot)
+    float CheckNeighbors(Vector3 checkPosOrigin, Vector3 checkDirection, Quaternion boxRot, Color debugColor, bool ignoreRot)
     {
 
         Vector3 currentCheckPos = checkPosOrigin;
@@ -285,12 +365,14 @@ public class DetectingWall : MonoBehaviour
         float extraLength = 0f;
 
         int limitCheck = 0;
+        
+        
         Vector3 boxSize = new Vector3(1.9f, 1.9f, 0.9f);
 
         while (limitCheck < 20)
         {
             limitCheck++;
-            currentCheckPos += checkDirection * 4.0f;
+            currentCheckPos += checkDirection * 4f;
 
 
             Collider[] neighbors = Physics.OverlapBox(currentCheckPos, boxSize, boxRot, WallLayer);
@@ -300,15 +382,21 @@ public class DetectingWall : MonoBehaviour
             foreach (Collider col in neighbors)
             {
 
-                float angleDiff = Quaternion.Angle(boxRot, col.transform.rotation);
 
-                if (angleDiff < 5f)
+                if (ignoreRot)
                 {
-                    foundValidNeighbor = true;
+                    foundValidNeighbor= true;
                     break;
-
-
                 }
+
+                
+                    float angleDiff = Quaternion.Angle(boxRot, col.transform.rotation);
+                    if (angleDiff < 5f)
+                    {
+                        foundValidNeighbor = true;
+                        break;
+                    }
+                
 
             }
 
@@ -316,7 +404,7 @@ public class DetectingWall : MonoBehaviour
             {
 
                 extraLength += 4f;
-                DrawDebugBox(currentCheckPos, boxSize, boxRot, Color.green);
+                //DrawDebugBox(currentCheckPos, boxSize, boxRot, debugColor);
 
 
 
@@ -331,82 +419,184 @@ public class DetectingWall : MonoBehaviour
         return extraLength;
 
     }
-    void DrawDebugBox(Vector3 center, Vector3 halfExtents, Quaternion rotation, Color color)
+
+
+    Vector3 SnapToGrid()
     {
-       
-        Vector3 size = halfExtents * 2f;
+        
+        Vector3 rawPoisition = transform.position;
+        Vector3 anchor = hasGridAnchor ? gridAnchorPoint : rawPoisition;
+        float x = Mathf.Round((rawPoisition.x - anchor.x) / nodeSize) * nodeSize+ anchor.x;
+        float z = Mathf.Round((rawPoisition.z - anchor.z) / nodeSize) * nodeSize + anchor.z;
 
-      
-        Vector3[] points = new Vector3[8];
-        points[0] = center + rotation * new Vector3(size.x, size.y, size.z) * 0.5f;
-        points[1] = center + rotation * new Vector3(-size.x, size.y, size.z) * 0.5f;
-        points[2] = center + rotation * new Vector3(-size.x, -size.y, size.z) * 0.5f;
-        points[3] = center + rotation * new Vector3(size.x, -size.y, size.z) * 0.5f;
-        points[4] = center + rotation * new Vector3(size.x, size.y, -size.z) * 0.5f;
-        points[5] = center + rotation * new Vector3(-size.x, size.y, -size.z) * 0.5f;
-        points[6] = center + rotation * new Vector3(-size.x, -size.y, -size.z) * 0.5f;
-        points[7] = center + rotation * new Vector3(size.x, -size.y, -size.z) * 0.5f;
+        float y = rawPoisition.y;
+        
+        return new Vector3(x, y, z);
 
-       
-        Debug.DrawLine(points[0], points[1], color); Debug.DrawLine(points[1], points[2], color);
-        Debug.DrawLine(points[2], points[3], color); Debug.DrawLine(points[3], points[0], color);
-
-        Debug.DrawLine(points[4], points[5], color); Debug.DrawLine(points[5], points[6], color);
-        Debug.DrawLine(points[6], points[7], color); Debug.DrawLine(points[7], points[4], color);
-
-        Debug.DrawLine(points[0], points[4], color); Debug.DrawLine(points[1], points[5], color);
-        Debug.DrawLine(points[2], points[6], color); Debug.DrawLine(points[3], points[7], color);
     }
 
-    void AnalyzeShape()
+    bool IsWall(Vector3 position)
     {
 
-        float roomDepth = distances[0] + distances[1];
-        float roomWidth = distances[2] + distances[3];
+        float halfSizeRef = (nodeSize / 2f) * 0.85f;
+        Vector3 halfsize = new Vector3(halfSizeRef, halfSizeRef, halfSizeRef);
 
-        float frontWallLength = totalLength[0];
-        float backWallLength = totalLength[1];
-        float rightWallLength = totalLength[2];
-        float leftWallLength = totalLength[3];
+        return Physics.CheckBox(position, halfsize, Quaternion.identity, WallLayer);
+    }
 
-        float gapThreshold = 2f;
+    void FloodFill()    
+    {
+        wallQueue.Clear();
+        visited.Clear();
 
-        bool gapOnLeft = (roomDepth > leftWallLength+gapThreshold);
-        bool gapOnRight = (roomDepth > rightWallLength + gapThreshold);
-        bool gapOnFront = (roomWidth > frontWallLength+gapThreshold);
-        bool gapOnBack = (roomWidth > backWallLength + gapThreshold);
+        float accumulatedHardness = 0f;
+        float accumulatedJagness = 0f;
+        int totalWallsTouched = 0;
+        
 
-        int gapCount = 0;
-        if (gapOnLeft) gapCount++;
-        if (gapOnRight) gapCount++;
-        if (gapOnFront) gapCount++;
-        if (gapOnBack) gapCount++;
-
-        if (gapCount == 0)
+       
+        Vector3 rawStart = SnapToGrid();
+        Vector3 safeStart = rawStart;
+        bool foundSafeSpot = true;
+        if (IsWall(rawStart))
         {
-            shapeType = "SimpleBox";
-            isComplexShape=false;
+             foundSafeSpot = false;
+            Vector3[] emergencyDirs = { Vector3.back, Vector3.forward, Vector3.left, Vector3.right };
+            foreach (Vector3 dir in emergencyDirs)
+            {
+                Vector3 neighbor = rawStart + (dir * (nodeSize*0.25f));
+                if (!IsWall(neighbor))
+                {
+                    safeStart = neighbor;
+                    foundSafeSpot = true;
+                    break;
+                }
+            }
+            
+        }
+        if (!foundSafeSpot) return;
+
+        wallQueue.Enqueue(safeStart);
+        visited.Add(safeStart);
+
+        int volumeCounter = 0;
+        float debugSize = (nodeSize / 2f) * 0.9f;
+        while (wallQueue.Count > 0 && volumeCounter < 200)
+        {
+            Vector3 currentPos = wallQueue.Dequeue();
+            volumeCounter++;
+
+            DrawDebugBox(currentPos, new Vector3(debugSize, debugSize, debugSize), Quaternion.identity, Color.yellow);
+
+            Vector3[] neighbors = new Vector3[]
+            {
+                currentPos + Vector3.forward * nodeSize,
+                currentPos + Vector3.back * nodeSize,
+                currentPos + Vector3.right * nodeSize,
+                currentPos + Vector3.left * nodeSize
+            };
+
+            foreach (var target in neighbors)
+            {
+                if (!visited.Contains(target))
+                {
+                    if (!IsWall(target))
+                    {
+                        visited.Add(target);
+                        wallQueue.Enqueue(target);
+                    }
+                    else
+                    {
+
+                        float h = 0f;
+                        float j = 0f;
+                        if (GetMaterialData(target, out h, out j))
+                        {
+                            accumulatedHardness += h;
+                            accumulatedJagness += j;
+                            totalWallsTouched++;
+                        }
+                    }
+             
+
+                }
+           
                 
-        }
-        else if (gapCount == 1)
-        {
-            shapeType = "L Shaped Room";
-            isComplexShape=true;
-        }
-        else if (gapCount >= 2)
-        {
-            if (gapOnLeft && gapOnRight)
-            {
-                shapeType = "T Shaped Room";
-                isComplexShape=true;
             }
-            else 
-            {
-                shapeType = "W Shaped Room";
-            }
+           
+
+          
         }
+        float voxelVolume = nodeSize * nodeSize * nodeSize;
+        totalRoomVolume = volumeCounter * voxelVolume;
+        if (totalWallsTouched > 0)
+        {
+            totalRoomHardness = accumulatedHardness / totalWallsTouched;
+            totalRoomJagness = accumulatedJagness / totalWallsTouched;
+        }
+        else
+        {
+            totalRoomHardness = 0f;
+            totalRoomJagness = 0f;
+        }
+
+
+
+
+
+
     }
 
 
+    
 
-}
+
+    bool  GetMaterialData(Vector3 wallPosition, out float hardness,out float jagness)
+    {
+        hardness = 0f;
+        jagness = 0f;
+
+        float halfSize = (nodeSize / 2) * 0.95f;
+        Vector3 boxSize = new Vector3(halfSize, halfSize, halfSize);
+
+        int count = Physics.OverlapBoxNonAlloc(wallPosition, boxSize, resultsBuffer, Quaternion.identity, WallLayer);
+        DrawDebugBox(wallPosition,boxSize, Quaternion.identity, Color.red);
+
+        float totalLocalHardness = 0f;
+        float totalLocalJagness = 0f;
+        int validMaterials = 0; 
+
+        for(int i = 0; i < count;i++)
+        {
+            string tag = resultsBuffer[i].tag;
+
+            if (hardnessLookup.TryGetValue(tag,out MaterialData data))
+            {
+                totalLocalHardness += data.hardness;
+                totalLocalJagness += data.jagness;
+                validMaterials++;
+            }
+        }
+        if(validMaterials > 0)
+        {
+            hardness = totalLocalHardness / validMaterials;
+            jagness = totalLocalJagness / validMaterials;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+        
+    }
+
+    
+        
+        
+
+    }
+    
+   
+
+  
+  
