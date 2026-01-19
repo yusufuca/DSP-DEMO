@@ -57,6 +57,9 @@
 		<property name="lowShelfGain">
 			<value>4</value>
 		</property>
+		<property name="earlyLateMix">
+			<value>62</value>
+		</property>
 		<property name="wetLevel">
 			<value>0</value>
 		</property>
@@ -249,7 +252,7 @@
 			<value>20</value>
 		</property>
 		<property name="value">
-			<value>60</value>
+			<value>40</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{42e2802d-0deb-4501-957b-349d1130dbbb}">
@@ -257,23 +260,23 @@
 			<value>5</value>
 		</property>
 		<property name="value">
-			<value>30</value>
+			<value>12</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{061c4d1b-e9dc-4318-a488-b9f500a44b66}">
 		<property name="position">
-			<value>0.25423728813559321</value>
+			<value>0</value>
 		</property>
 		<property name="value">
-			<value>17</value>
+			<value>24</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{226af82c-737c-4fb1-8c10-f71105ef167c}">
 		<property name="position">
-			<value>19.802259887005651</value>
+			<value>20</value>
 		</property>
 		<property name="value">
-			<value>46</value>
+			<value>66</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{755b7952-9442-4a28-9359-d6f17406399c}">
@@ -281,7 +284,7 @@
 			<value>0</value>
 		</property>
 		<property name="value">
-			<value>50</value>
+			<value>74</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{e6a59978-5cd6-4539-a67e-b1c150443345}">
@@ -289,7 +292,7 @@
 			<value>1</value>
 		</property>
 		<property name="value">
-			<value>83.5051575</value>
+			<value>100</value>
 		</property>
 	</object>
 	<object class="AutomationPoint" id="{be98bfa9-d484-4a1d-95f1-2d62d6873572}">

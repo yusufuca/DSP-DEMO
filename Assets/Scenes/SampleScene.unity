@@ -95817,7 +95817,7 @@ MonoBehaviour:
   wallHeight: 4
   wallWidth: 4
   wallDepth: 2
-  gameSeed: 1
+  gameSeed: 0
   diagonalChance: 25
 --- !u!43 &1894062517
 Mesh:
