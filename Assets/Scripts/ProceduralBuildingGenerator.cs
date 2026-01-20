@@ -63,7 +63,8 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     public int wallHeight = 4;
     public int wallWidth = 4;
     public int wallDepth = 2;
-
+    public int houseCount = 0;
+    public int maxHouseCount = 5;
     [Header("GameSeed")]
     public int gameSeed = 0;
     private int generatedSeed;
@@ -105,9 +106,10 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         int houseSpecificSeed = gameSeed + (pos.x * 1000) + (pos.y * 100);
         rng = new System.Random(houseSpecificSeed);
 
-      
 
-        ClearHouse();
+       
+            ClearHouse();
+      
         isDoorSpawned = false;
         NextPrefabPicker();
         GenerateTileMap(pos);
@@ -328,7 +330,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
         spawnedObjects.Add(obj);
     }
-    void ClearHouse()
+    public void ClearHouse()
     {
         // Destroy all the old game objects
         foreach (GameObject obj in spawnedObjects)

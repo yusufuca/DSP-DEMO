@@ -6142,7 +6142,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &126953809
 Transform:
   m_ObjectHideFlags: 0
@@ -17319,7 +17319,7 @@ Transform:
   m_GameObject: {fileID: 319956272}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.7329998, y: -14.391254, z: -40.34323}
+  m_LocalPosition: {x: -4.29, y: -14.391254, z: -40.34323}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -22333,7 +22333,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &416347657
 Transform:
   m_ObjectHideFlags: 0
@@ -39661,7 +39661,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &772103647
 Transform:
   m_ObjectHideFlags: 0
@@ -44921,7 +44921,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &894017045
 Transform:
   m_ObjectHideFlags: 0
@@ -44931,7 +44931,7 @@ Transform:
   m_GameObject: {fileID: 894017044}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.4, y: -14.391254, z: -40.34323}
+  m_LocalPosition: {x: -15.36, y: -14.391254, z: -40.34323}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -75335,7 +75335,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1510441126
 Transform:
   m_ObjectHideFlags: 0
@@ -81445,7 +81445,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1627952927
 Transform:
   m_ObjectHideFlags: 0
@@ -86620,7 +86620,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1726908691
 Transform:
   m_ObjectHideFlags: 0
@@ -90972,17 +90972,17 @@ MonoBehaviour:
   earlyDelayText: {fileID: 623155919}
   lateDelayText: {fileID: 167637192}
   definedMaterials:
-  - tag: wallSolid
-    hardness: 0.5
-    jagness: 0.4
   - tag: wallMarble
-    hardness: 1
+    hardness: 0.8
     jagness: 0.2
   - tag: wallConcrete
     hardness: 0.6
     jagness: 0.4
+  - tag: wallSolid
+    hardness: 0.5
+    jagness: 0.4
   - tag: wallWood
-    hardness: 0.2
+    hardness: 0.4
     jagness: 0.8
   - tag: wallDiagonal
     hardness: 1
@@ -91006,6 +91006,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   scanInterval: 0.1
+  reverbSizePar: 0.03
 --- !u!4 &1803420981 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3239287078342634494, guid: 1eff8f9b99761af4d9ca291e21553922, type: 3}
@@ -95813,10 +95814,12 @@ MonoBehaviour:
   wallJagged: {fileID: 0}
   wallDiagonalJagged: {fileID: 0}
   nextPrefab: {fileID: 0}
-  roomSize: 12
+  roomSize: 25
   wallHeight: 4
   wallWidth: 4
   wallDepth: 2
+  houseCount: 0
+  maxHouseCount: 5
   gameSeed: 0
   diagonalChance: 25
 --- !u!43 &1894062517

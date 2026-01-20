@@ -77,7 +77,7 @@ public class DetectingWall : MonoBehaviour
     private Vector3 gridAnchorPoint = Vector3.zero;
     private bool hasGridAnchor = false;
     private float nodeSize = 2f;
-
+    public float reverbSizePar = 0.025f;
 
     private struct Sensor
     {
@@ -176,8 +176,8 @@ public class DetectingWall : MonoBehaviour
 
         for (int i = 0; i < 6; i++) totalJagness += jagnesses[i] / 6;
 
-        float mainRoomVolume = 0f;
-        for (int i = 0; i < 4; i++) mainRoomVolume += ((totalLength[i] * totalHeight[i])/4);
+        float mainRoomVolume = totalRoomVolume * (distances[4] + distances[5]);
+       
 
         float roomSize = 0f;
 
@@ -189,9 +189,8 @@ public class DetectingWall : MonoBehaviour
         /* REVERB TIME */
 
 
-        //float reverbTime = (totalDistances * totalHardness);
 
-        float reverbTime = mainRoomVolume * totalHardness;
+        float reverbTime = (mainRoomVolume * totalRoomHardness) *reverbSizePar;
 
         reverbTimeText.text = $"ReverbTime is: {reverbTime} TotalRoomVolume: {totalRoomVolume} TotalRoomHardness: {totalRoomHardness} TotalRoomJagness: {totalRoomJagness}"; 
 
@@ -220,7 +219,7 @@ public class DetectingWall : MonoBehaviour
 
         /* DIFFUSION */
 
-        float diffusion = totalJagness;
+        float diffusion = totalRoomJagness;
 
         /* DENSITY */
 
@@ -231,19 +230,19 @@ public class DetectingWall : MonoBehaviour
 
         /* HF DECAY */
 
-        float hfDecayRatio = totalHardness;
+        float hfDecayRatio = totalRoomHardness;
 
         /* HF REFERENCE */
 
-        float hfReference = totalHardness;
+        float hfReference = totalRoomHardness;
 
         /* HIGH CUT */
 
-        float highCut = totalDistances;
+        float highCut = totalRoomVolume * reverbSizePar;
 
         /* EARLY LATE MIX */
 
-        float delayMix = totalDistances;
+        float delayMix = reverbTime*reverbSizePar;
 
         /* REVERB ON OF */
 
@@ -527,7 +526,7 @@ public class DetectingWall : MonoBehaviour
 
           
         }
-        float voxelVolume = nodeSize * nodeSize * nodeSize;
+        float voxelVolume = nodeSize * nodeSize;
         totalRoomVolume = volumeCounter * voxelVolume;
         if (totalWallsTouched > 0)
         {
