@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="AudioFile" id="{fb5f8406-3713-44ad-b0a8-4f95e8d5c2d2}">
+		<property name="assetPath">
+			<value>AK 47 Assault Rifle- Sound Effect Pack (HQ) [D2TG6kNEkDE].mp3</value>
+		</property>
+		<property name="isStreaming">
+			<value>true</value>
+		</property>
+		<property name="frequencyInKHz">
+			<value>44.0999985</value>
+		</property>
+		<property name="channelCount">
+			<value>2</value>
+		</property>
+		<property name="length">
+			<value>80.901224489795922</value>
+		</property>
+		<relationship name="masterAssetFolder">
+			<destination>{5db2e38b-516c-4068-ba0d-94f991259d22}</destination>
+		</relationship>
+	</object>
+</objects>

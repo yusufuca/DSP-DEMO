@@ -2,11 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FMODUnity;
+using FMOD.Studio;
 
 public class ReverbManager : MonoBehaviour
 {
     public static ReverbManager RevInstance { get; private set; }
 
+ 
     private void Awake()
     {
         if (RevInstance != null && RevInstance != this)
@@ -18,7 +20,9 @@ public class ReverbManager : MonoBehaviour
             RevInstance = this;
         }
     }
-
+    
+    public EventReference rifleSfx;
+    public EventReference pistolSfx;
 
 
     public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix)
