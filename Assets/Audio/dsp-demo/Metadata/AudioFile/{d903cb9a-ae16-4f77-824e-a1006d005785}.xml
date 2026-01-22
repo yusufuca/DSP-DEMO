@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.03.00">
 	<object class="AudioFile" id="{d903cb9a-ae16-4f77-824e-a1006d005785}">
 		<property name="assetPath">
-			<value>CS_GO Five-Seven Green Screen overlay + Sound Effect [High Quality] [M-fIfxAOjAE] - Trimmed (4).wav</value>
+			<value>Pistol/CS_GO Five-Seven Green Screen overlay + Sound Effect [High Quality] [M-fIfxAOjAE] - Trimmed (4).wav</value>
 		</property>
 		<property name="frequencyInKHz">
 			<value>44.0999985</value>

@@ -23,6 +23,8 @@ public class ReverbManager : MonoBehaviour
     
     public EventReference rifleSfx;
     public EventReference pistolSfx;
+    public EventReference walkSFX;
+    public EventReference runSFX;
 
 
     public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix)

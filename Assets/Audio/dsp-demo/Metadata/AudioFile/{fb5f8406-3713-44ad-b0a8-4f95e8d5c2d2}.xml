@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.03.00">
 	<object class="AudioFile" id="{fb5f8406-3713-44ad-b0a8-4f95e8d5c2d2}">
 		<property name="assetPath">
-			<value>AK 47 Assault Rifle- Sound Effect Pack (HQ) [D2TG6kNEkDE].mp3</value>
+			<value>Rifle/AK 47 Assault Rifle- Sound Effect Pack (HQ) [D2TG6kNEkDE].mp3</value>
 		</property>
 		<property name="isStreaming">
 			<value>true</value>

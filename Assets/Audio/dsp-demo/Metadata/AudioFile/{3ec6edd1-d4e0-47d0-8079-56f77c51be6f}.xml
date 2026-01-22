@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.03.00">
 	<object class="AudioFile" id="{3ec6edd1-d4e0-47d0-8079-56f77c51be6f}">
 		<property name="assetPath">
-			<value>AK 48 Assault Rifle- Sound Effect Pack (HQ) [D2TG6kNEkDE] - Trimmed.wav</value>
+			<value>Rifle/AK 48 Assault Rifle- Sound Effect Pack (HQ) [D2TG6kNEkDE] - Trimmed.wav</value>
 		</property>
 		<property name="frequencyInKHz">
 			<value>44.0999985</value>

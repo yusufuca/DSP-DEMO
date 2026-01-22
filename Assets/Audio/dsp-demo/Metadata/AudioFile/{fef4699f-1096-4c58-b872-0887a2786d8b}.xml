@@ -2,7 +2,7 @@
 <objects serializationModel="Studio.02.03.00">
 	<object class="AudioFile" id="{fef4699f-1096-4c58-b872-0887a2786d8b}">
 		<property name="assetPath">
-			<value>CS_GO Five-Seven Green Screen overlay + Sound Effect [High Quality] [M-fIfxAOjAE].mp3</value>
+			<value>Pistol/CS_GO Five-Seven Green Screen overlay + Sound Effect [High Quality] [M-fIfxAOjAE].mp3</value>
 		</property>
 		<property name="isStreaming">
 			<value>true</value>

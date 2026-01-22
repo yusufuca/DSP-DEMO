@@ -1,3 +1,4 @@
+using FMODUnity;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -20,8 +21,46 @@ namespace StarterAssets
 		public bool cursorLocked = true;
 		public bool cursorInputForLook = true;
 
+		[Header("Sfx Settings")]
+
+        public float stepRate;
+        private float nextStepTime;
+
+
+
+        private void Update()
+        {
+            if(FirstPersonController.Grounded)
+			{
+				if(Mathf.Abs(move.x) >0 || Mathf.Abs(move.y) >0)
+				{
+					PlayFootStep();
+				}
+			}
+        }
+
+        void PlayFootStep()
+		{
+			if (sprint && Time.time >= nextStepTime)
+			{
+				stepRate = 0.25f;
+                RuntimeManager.PlayOneShot(ReverbManager.RevInstance.runSFX);
+				nextStepTime = Time.time + stepRate;
+
+            }
+			if(!sprint && Time.time >= nextStepTime) 
+			{
+				stepRate = 0.5f;
+                RuntimeManager.PlayOneShot(ReverbManager.RevInstance.walkSFX);
+                nextStepTime = Time.time + stepRate;
+            }
+				
+			
+		}
+
+
 #if ENABLE_INPUT_SYSTEM
-		public void OnMove(InputValue value)
+        public void OnMove(InputValue value)
 		{
 			MoveInput(value.Get<Vector2>());
 		}

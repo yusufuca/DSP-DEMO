@@ -1,5 +1,32 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8510619116720217654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/FootStepsWalk
+  m_EditorClassIdentifier: 
+  Path: event:/FootStepsWalk
+  Guid:
+    Data1: -1622357153
+    Data2: 1306197983
+    Data3: 642851000
+    Data4: -489554803
+  Banks:
+  - {fileID: -5301400106237859156}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 651
 --- !u!114 &-8176496069664824784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,10 +141,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639047305217395372
+  lastModified: 639047325139478683
   FileSizes:
   - Name: Desktop
-    Value: 97920
+    Value: 176608
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -218,6 +245,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 558
+--- !u!114 &-745391855228461207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/FootStepsRun
+  m_EditorClassIdentifier: 
+  Path: event:/FootStepsRun
+  Guid:
+    Data1: 177251192
+    Data2: 1118479962
+    Data3: 695691694
+    Data4: -542574540
+  Banks:
+  - {fileID: -5301400106237859156}
+  IsStream: 0
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 20
+  Length: 651
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,6 +291,8 @@ MonoBehaviour:
   - {fileID: -7541906100206668714}
   - {fileID: 978090399546252162}
   - {fileID: -2873935296831473075}
+  - {fileID: -8510619116720217654}
+  - {fileID: -745391855228461207}
   EditorParameters:
   - {fileID: 2802092296333379079}
   - {fileID: -4734576490075718714}
@@ -253,7 +309,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639047305217430773
+  cacheTime: 639047325139503094
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -261,6 +317,10 @@ MonoBehaviour:
     index: 1
   - key: event:/Pistol
     index: 2
+  - key: event:/FootStepsWalk
+    index: 3
+  - key: event:/FootStepsRun
+    index: 4
 --- !u!114 &68622444072466593
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,10 +435,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639047305217430773
+  lastModified: 639047325139503094
   FileSizes:
   - Name: Desktop
-    Value: 1312
+    Value: 1402
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:
