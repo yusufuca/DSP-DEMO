@@ -58,6 +58,9 @@
 		</relationship>
 	</object>
 	<object class="DelayEffect" id="{434f1683-acae-4f4b-ab0c-5cf3044abf3a}">
+		<property name="level">
+			<value>-10</value>
+		</property>
 		<property name="dryLevel">
 			<value>-80</value>
 		</property>
@@ -159,7 +162,7 @@
 	</object>
 	<object class="AutomationPoint" id="{1a3c1f47-bac4-4e3f-9fad-5b0737a7bc48}">
 		<property name="position">
-			<value>5000</value>
+			<value>500</value>
 		</property>
 		<property name="value">
 			<value>5000</value>
@@ -175,10 +178,10 @@
 	</object>
 	<object class="AutomationPoint" id="{019c6404-1668-4535-9cba-61242162e085}">
 		<property name="position">
-			<value>100</value>
+			<value>1</value>
 		</property>
 		<property name="value">
-			<value>100</value>
+			<value>50</value>
 		</property>
 	</object>
 </objects>
