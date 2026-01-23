@@ -8009,7 +8009,7 @@ GameObject:
   - component: {fileID: 167637193}
   - component: {fileID: 167637192}
   m_Layer: 5
-  m_Name: LateDelay
+  m_Name: RoomData
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32422,7 +32422,7 @@ GameObject:
   - component: {fileID: 623155920}
   - component: {fileID: 623155919}
   m_Layer: 5
-  m_Name: EarlyDelay
+  m_Name: RoomMode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -91180,7 +91180,7 @@ MonoBehaviour:
       Data3: 1445915300
       Data4: -2122279670
     Path: event:/Clap
-  maxDistance: 40
+  maxDistance: 99
   frontText: {fileID: 1901860841}
   backText: {fileID: 126352526}
   leftText: {fileID: 368126462}
@@ -91188,8 +91188,8 @@ MonoBehaviour:
   upText: {fileID: 1647677861}
   downText: {fileID: 2016486047}
   reverbTimeText: {fileID: 317819011}
-  earlyDelayText: {fileID: 623155919}
-  lateDelayText: {fileID: 167637192}
+  roomDataText: {fileID: 167637192}
+  roomModeText: {fileID: 623155919}
   definedMaterials:
   - tag: wallMarble
     hardness: 0.8

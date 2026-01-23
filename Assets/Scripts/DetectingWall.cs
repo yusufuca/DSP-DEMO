@@ -15,11 +15,11 @@ public class DetectingWall : MonoBehaviour
 {
     [Header("Sfx")]
     public EventReference clapSFX;
-    
+
     [Header("Prefabs")]
-   
+
     public float maxDistance = 20f;
-  
+
     [Header("Text")]
     public TextMeshProUGUI frontText;
     public TextMeshProUGUI backText;
@@ -28,8 +28,8 @@ public class DetectingWall : MonoBehaviour
     public TextMeshProUGUI upText;
     public TextMeshProUGUI downText;
     public TextMeshProUGUI reverbTimeText;
-    public TextMeshProUGUI earlyDelayText;
-    public TextMeshProUGUI lateDelayText;
+    public TextMeshProUGUI roomDataText;
+    public TextMeshProUGUI roomModeText;
 
 
     /*MATERIAL HARDNESS*/
@@ -37,7 +37,7 @@ public class DetectingWall : MonoBehaviour
 
     [Header("MaterialData")]
 
-    public List<MaterialData> definedMaterials = new List<MaterialData> ();
+    public List<MaterialData> definedMaterials = new List<MaterialData>();
 
     [System.Serializable]
     public struct MaterialData
@@ -48,12 +48,12 @@ public class DetectingWall : MonoBehaviour
     }
 
     public LayerMask WallLayer;
-   
+
     private float[] distances = new float[6];
     private float[] totalHeight = new float[6];
     private float[] totalLength = new float[6];
 
-   
+
 
     private float[] hardnesses = new float[6];
     private float[] jagnesses = new float[6];
@@ -68,7 +68,7 @@ public class DetectingWall : MonoBehaviour
 
     HashSet<Vector3> visited = new HashSet<Vector3>();
     Collider[] resultsBuffer = new Collider[10];
-    public float scanInterval = 1f; 
+    public float scanInterval = 1f;
     private float scanTimer = 0f;
 
 
@@ -78,6 +78,17 @@ public class DetectingWall : MonoBehaviour
     private bool hasGridAnchor = false;
     private float nodeSize = 2f;
     public float reverbSizePar = 0.025f;
+
+
+    private float dEarlyDelay;
+    private float dLateDelay;
+    private float dFeedBack;
+
+    private float speedOfSound = 343f;
+
+
+
+
 
     private struct Sensor
     {
@@ -118,19 +129,17 @@ public class DetectingWall : MonoBehaviour
             }
             scanTimer = 0;
         }
-        
+
         if (Input.GetKeyDown(KeyCode.E))
-        { 
-            Clapping(); 
+        {
+            Clapping();
         }
         ParameterUpdater();
-        
+
     }
-
-
     private void Clapping()
     {
-        
+
         RuntimeManager.PlayOneShot(clapSFX);
     }
 
@@ -162,26 +171,26 @@ public class DetectingWall : MonoBehaviour
     }
     void ParameterUpdater()
     {
-
+        DelayParameters();
 
         float totalDistances = 0f;
 
-        for (int i = 0; i < 6; i++) totalDistances += distances[i]/6;
+        for (int i = 0; i < 6; i++) totalDistances += distances[i] / 6;
 
         float totalHardness = 0f;
 
-        for (int i = 0; i < 6; i++) totalHardness += hardnesses[i]/6;
+        for (int i = 0; i < 6; i++) totalHardness += hardnesses[i] / 6;
 
         float totalJagness = 0f;
 
         for (int i = 0; i < 6; i++) totalJagness += jagnesses[i] / 6;
 
         float mainRoomVolume = totalRoomVolume * (distances[4] + distances[5]);
-       
+
 
         float roomSize = 0f;
 
-        for (int i = 0; i < 4; i++) roomSize += ((totalLength[i] + totalHeight[i]) /4) ;
+        for (int i = 0; i < 4; i++) roomSize += ((totalLength[i] + totalHeight[i]) / 4);
 
         float totalVolume = (roomSize * 4f);
 
@@ -190,9 +199,9 @@ public class DetectingWall : MonoBehaviour
 
 
 
-        float reverbTime = (mainRoomVolume * totalRoomHardness) *reverbSizePar;
+        float reverbTime = (mainRoomVolume * totalRoomHardness) * reverbSizePar;
 
-        reverbTimeText.text = $"ReverbTime is: {reverbTime} TotalRoomVolume: {totalRoomVolume} TotalRoomHardness: {totalRoomHardness} TotalRoomJagness: {totalRoomJagness}"; 
+
 
         /* EARLY DELAY */
 
@@ -201,21 +210,19 @@ public class DetectingWall : MonoBehaviour
             if (distances[i] > 0 && distances[i] < minWallDist)
             {
                 minWallDist = distances[i];
-                
+
             }
-          
-          
         }
 
-        // float earlyDelay = distances.Where(d => d > 2).DefaultIfEmpty(maxDistance).Min();
+
         float earlyDelay = minWallDist;
 
-        earlyDelayText.text = $"EarlyDelay is: {earlyDelay}";
+
 
         /* LATE DELAY */
 
-        float lateDelay =(reverbTime * 0.5f);
-        
+        float lateDelay = (reverbTime * 0.5f);
+
 
         /* DIFFUSION */
 
@@ -223,9 +230,9 @@ public class DetectingWall : MonoBehaviour
 
         /* DENSITY */
 
-        float density = totalJagness*totalHardness;
+        float density = totalJagness * totalHardness;
 
-        
+
 
 
         /* HF DECAY */
@@ -242,7 +249,7 @@ public class DetectingWall : MonoBehaviour
 
         /* EARLY LATE MIX */
 
-        float delayMix = reverbTime*reverbSizePar;
+        float delayMix = reverbTime * reverbSizePar;
 
         /* REVERB ON OF */
 
@@ -251,18 +258,22 @@ public class DetectingWall : MonoBehaviour
         if (distances[4] > 0)
         {
             onOF = 1;
+            reverbTimeText.text = $"Reverb Time is: {reverbTime} Early Delay is: {earlyDelay} LateDelay is: {lateDelay} Diffusion: {diffusion}";
+            roomModeText.text = $"HF Decay: {hfDecayRatio} HF Reference {hfReference} HighCut: {highCut}";
+            roomDataText.text = $"TotalRoomVolume: {totalRoomVolume} Avarage Room Hardness: {totalRoomHardness} Avarage Room jagness: {totalRoomJagness}";
         }
         else
         {
-            onOF = 0;   
+            onOF = 0;
+            reverbTimeText.text = $"Early Delay: {dEarlyDelay} Late Delay: {dLateDelay} FeedBack is: {dFeedBack}";
         }
-        lateDelayText.text = $"LateDleay is: {lateDelay} Diffusion: {diffusion} Density {density} HF Decay: {hfDecayRatio} HF Reference {hfReference} HighCut: {highCut}";
 
-        ReverbManager.RevInstance.UpdateReverb(reverbTime,earlyDelay,lateDelay,onOF, diffusion,density,hfDecayRatio,hfReference,highCut,delayMix);
+
+        ReverbManager.RevInstance.UpdateReverb(reverbTime, earlyDelay, lateDelay, onOF, diffusion, density, hfDecayRatio, hfReference, highCut, delayMix,dEarlyDelay,dLateDelay,dFeedBack);
 
 
     }
-    
+
     void DetectWall()
     {
         for (int i = 0; i < sensors.Length; i++)
@@ -270,11 +281,11 @@ public class DetectingWall : MonoBehaviour
             Vector3 origin = transform.position + (Vector3.up);
             Sensor s = sensors[i];
             distances[i] = maxDistance;
-            
-            Vector3 currentWorldDir = transform.TransformDirection(s.dir);
-            Vector3 rawDir= currentWorldDir;
 
-            if(s.name!="Up" && s.name != "Down")
+            Vector3 currentWorldDir = transform.TransformDirection(s.dir);
+            Vector3 rawDir = currentWorldDir;
+
+            if (s.name != "Up" && s.name != "Down")
             {
                 if (Mathf.Abs(rawDir.x) > Mathf.Abs(rawDir.z))
                 {
@@ -321,7 +332,7 @@ public class DetectingWall : MonoBehaviour
                 float rightNeighbors = CheckNeighbors(checkPosOrigin, wallRight, wallRot, Color.green, false);
                 float leftNeighbors = CheckNeighbors(checkPosOrigin, -wallRight, wallRot, Color.green, false);
 
-                
+
 
 
 
@@ -338,7 +349,7 @@ public class DetectingWall : MonoBehaviour
 
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
 
-                s.ui.text = $"{s.name}{hitTag}Detected Distance: {distances[i]:F2}Hardness:  {hardnesses[i]} Jagness: {jagnesses[i]} Height:{totalHeight[i]}m Length:{totalLength[i]}m";
+                s.ui.text = $"{s.name} {hitTag} Detected. Distance: {distances[i]:F2} Hardness: {hardnesses[i]} Jagness: {jagnesses[i]}";
             }
             else
             {
@@ -351,10 +362,10 @@ public class DetectingWall : MonoBehaviour
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
                 // Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
             }
-            
+
         }
 
-        
+
     }
     float CheckNeighbors(Vector3 checkPosOrigin, Vector3 checkDirection, Quaternion boxRot, Color debugColor, bool ignoreRot)
     {
@@ -364,8 +375,8 @@ public class DetectingWall : MonoBehaviour
         float extraLength = 0f;
 
         int limitCheck = 0;
-        
-        
+
+
         Vector3 boxSize = new Vector3(1.9f, 1.9f, 0.9f);
 
         while (limitCheck < 20)
@@ -384,18 +395,18 @@ public class DetectingWall : MonoBehaviour
 
                 if (ignoreRot)
                 {
-                    foundValidNeighbor= true;
+                    foundValidNeighbor = true;
                     break;
                 }
 
-                
-                    float angleDiff = Quaternion.Angle(boxRot, col.transform.rotation);
-                    if (angleDiff < 5f)
-                    {
-                        foundValidNeighbor = true;
-                        break;
-                    }
-                
+
+                float angleDiff = Quaternion.Angle(boxRot, col.transform.rotation);
+                if (angleDiff < 5f)
+                {
+                    foundValidNeighbor = true;
+                    break;
+                }
+
 
             }
 
@@ -419,17 +430,16 @@ public class DetectingWall : MonoBehaviour
 
     }
 
-
     Vector3 SnapToGrid()
     {
-        
+
         Vector3 rawPoisition = transform.position;
         Vector3 anchor = hasGridAnchor ? gridAnchorPoint : rawPoisition;
-        float x = Mathf.Round((rawPoisition.x - anchor.x) / nodeSize) * nodeSize+ anchor.x;
+        float x = Mathf.Round((rawPoisition.x - anchor.x) / nodeSize) * nodeSize + anchor.x;
         float z = Mathf.Round((rawPoisition.z - anchor.z) / nodeSize) * nodeSize + anchor.z;
 
         float y = rawPoisition.y;
-        
+
         return new Vector3(x, y, z);
 
     }
@@ -443,7 +453,7 @@ public class DetectingWall : MonoBehaviour
         return Physics.CheckBox(position, halfsize, Quaternion.identity, WallLayer);
     }
 
-    void FloodFill()    
+    void FloodFill()
     {
         wallQueue.Clear();
         visited.Clear();
@@ -451,19 +461,19 @@ public class DetectingWall : MonoBehaviour
         float accumulatedHardness = 0f;
         float accumulatedJagness = 0f;
         int totalWallsTouched = 0;
-        
 
-       
+
+
         Vector3 rawStart = SnapToGrid();
         Vector3 safeStart = rawStart;
         bool foundSafeSpot = true;
         if (IsWall(rawStart))
         {
-             foundSafeSpot = false;
+            foundSafeSpot = false;
             Vector3[] emergencyDirs = { Vector3.back, Vector3.forward, Vector3.left, Vector3.right };
             foreach (Vector3 dir in emergencyDirs)
             {
-                Vector3 neighbor = rawStart + (dir * (nodeSize*0.25f));
+                Vector3 neighbor = rawStart + (dir * (nodeSize * 0.25f));
                 if (!IsWall(neighbor))
                 {
                     safeStart = neighbor;
@@ -471,7 +481,7 @@ public class DetectingWall : MonoBehaviour
                     break;
                 }
             }
-            
+
         }
         if (!foundSafeSpot) return;
 
@@ -516,15 +526,15 @@ public class DetectingWall : MonoBehaviour
                             totalWallsTouched++;
                         }
                     }
-             
+
 
                 }
-           
-                
-            }
-           
 
-          
+
+            }
+
+
+
         }
         float voxelVolume = nodeSize * nodeSize;
         totalRoomVolume = volumeCounter * voxelVolume;
@@ -546,11 +556,7 @@ public class DetectingWall : MonoBehaviour
 
     }
 
-
-    
-
-
-    bool  GetMaterialData(Vector3 wallPosition, out float hardness,out float jagness)
+    bool GetMaterialData(Vector3 wallPosition, out float hardness, out float jagness)
     {
         hardness = 0f;
         jagness = 0f;
@@ -559,24 +565,24 @@ public class DetectingWall : MonoBehaviour
         Vector3 boxSize = new Vector3(halfSize, halfSize, halfSize);
 
         int count = Physics.OverlapBoxNonAlloc(wallPosition, boxSize, resultsBuffer, Quaternion.identity, WallLayer);
-        DrawDebugBox(wallPosition,boxSize, Quaternion.identity, Color.red);
+        DrawDebugBox(wallPosition, boxSize, Quaternion.identity, Color.red);
 
         float totalLocalHardness = 0f;
         float totalLocalJagness = 0f;
-        int validMaterials = 0; 
+        int validMaterials = 0;
 
-        for(int i = 0; i < count;i++)
+        for (int i = 0; i < count; i++)
         {
             string tag = resultsBuffer[i].tag;
 
-            if (hardnessLookup.TryGetValue(tag,out MaterialData data))
+            if (hardnessLookup.TryGetValue(tag, out MaterialData data))
             {
                 totalLocalHardness += data.hardness;
                 totalLocalJagness += data.jagness;
                 validMaterials++;
             }
         }
-        if(validMaterials > 0)
+        if (validMaterials > 0)
         {
             hardness = totalLocalHardness / validMaterials;
             jagness = totalLocalJagness / validMaterials;
@@ -586,14 +592,64 @@ public class DetectingWall : MonoBehaviour
         {
             return false;
         }
-        
-    }
-
-    
-        
-        
 
     }
+
+    void DelayParameters()
+    {
+        float minDistance = 99f;
+        float maxDistance = 0f;
+        float totalHardness = 0f;
+        int validWalls = 0;
+
+        for (int i = 0; i < 6; i++)
+        {
+            float dist = distances[i];
+            if (dist > 0)
+            {
+                if (dist < minDistance) minDistance = dist;
+
+                if (dist > maxDistance) maxDistance = dist;
+
+                totalHardness += hardnesses[i];
+                validWalls++;
+            }
+            
+            // early delay
+            if (minDistance < 999f)
+            {
+                dEarlyDelay = (minDistance * 2f / speedOfSound) * 1000f;
+            }
+            else
+            {
+                dEarlyDelay = 0f;
+            }
+
+            // late delay
+
+            if (maxDistance > 0f)
+            {
+                dLateDelay = (maxDistance * 2f / speedOfSound) * 1000f;
+            }
+            else
+            {
+                dLateDelay = 0f;
+            }
+
+            if (validWalls > 0)
+            {
+                float avgHardness = totalHardness / validWalls;
+               
+                dFeedBack = avgHardness * 0.8f;
+            }
+            else
+            {
+                dFeedBack = 0f;
+            }
+        }
+
+    }
+}
     
    
 

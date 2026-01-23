@@ -27,7 +27,7 @@ public class ReverbManager : MonoBehaviour
     public EventReference runSFX;
 
 
-    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix)
+    public void UpdateReverb(float avRoomSize, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix, float dEarlyDelay, float dLateDelay, float dDiffusion)
     {
         RuntimeManager.StudioSystem.setParameterByName("reverbTime", avRoomSize);
         RuntimeManager.StudioSystem.setParameterByName("earlyDelay", earlyDelay);
@@ -39,5 +39,8 @@ public class ReverbManager : MonoBehaviour
         RuntimeManager.StudioSystem.setParameterByName("hfReference", hfReference);
         RuntimeManager.StudioSystem.setParameterByName("highCut", highCut);
         RuntimeManager.StudioSystem.setParameterByName("delayMix", delayMix);
+        RuntimeManager.StudioSystem.setParameterByName("dEarlyDelay", dEarlyDelay);
+        RuntimeManager.StudioSystem.setParameterByName("dLateDelay", dLateDelay);
+        RuntimeManager.StudioSystem.setParameterByName("dDiffusion", dDiffusion);
     }
 }

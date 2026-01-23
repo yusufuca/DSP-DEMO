@@ -75,6 +75,30 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
+--- !u!114 &-7677686626742110297
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dLateDelay
+  m_EditorClassIdentifier: 
+  Name: dLateDelay
+  StudioPath: parameter:/dLateDelay
+  Min: 0
+  Max: 5000
+  Default: 0
+  ID:
+    data1: 968010199
+    data2: 593595765
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &-7541906100206668714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,10 +165,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639047325139478683
+  lastModified: 639047385679387240
   FileSizes:
   - Name: Desktop
-    Value: 176608
+    Value: 179360
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -214,6 +238,30 @@ MonoBehaviour:
   ID:
     data1: 1344546621
     data2: 1618726375
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &-2957846298535266187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dDiffusion
+  m_EditorClassIdentifier: 
+  Name: dDiffusion
+  StudioPath: parameter:/dDiffusion
+  Min: 0
+  Max: 100
+  Default: 0
+  ID:
+    data1: 616706802
+    data2: 2024793273
   Type: 0
   IsGlobal: 1
   Labels: []
@@ -304,12 +352,16 @@ MonoBehaviour:
   - {fileID: 6214065512174954345}
   - {fileID: -8176496069664824784}
   - {fileID: 68622444072466593}
+  - {fileID: -2957846298535266187}
+  - {fileID: 1834915592135511255}
+  - {fileID: -7677686626742110297}
+  - {fileID: 5671683036403871263}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639047325139503094
+  cacheTime: 639047385679462460
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -372,6 +424,30 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 250
+--- !u!114 &1834915592135511255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/delayOnOf
+  m_EditorClassIdentifier: 
+  Name: delayOnOf
+  StudioPath: parameter:/delayOnOf
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 113099103
+    data2: 1175483613
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &2583587561185576945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -420,6 +496,30 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
+--- !u!114 &5671683036403871263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dEarlyDelay
+  m_EditorClassIdentifier: 
+  Name: dEarlyDelay
+  StudioPath: parameter:/dearlyDelay
+  Min: 0
+  Max: 5000
+  Default: 0
+  ID:
+    data1: 1935533868
+    data2: 4155040070
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &5800111078373747694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -435,10 +535,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639047325139503094
+  lastModified: 639047385679462460
   FileSizes:
   - Name: Desktop
-    Value: 1402
+    Value: 1606
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:
