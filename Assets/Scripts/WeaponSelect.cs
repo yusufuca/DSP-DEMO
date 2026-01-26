@@ -11,6 +11,9 @@ public class WeaponSelect : MonoBehaviour
 
     public static bool isRifle;
     public static bool isPistol;
+    public static bool isEmpty = true;
+
+
 
   
     void Start()
@@ -26,6 +29,7 @@ public class WeaponSelect : MonoBehaviour
         {
             isRifle = true;
             isPistol = false;
+            isEmpty = false;
            rifle.SetActive(true);
            pistol.SetActive(false);
         }
@@ -33,6 +37,7 @@ public class WeaponSelect : MonoBehaviour
         {
             isRifle = false;
             isPistol = true;
+            isEmpty = false;
            rifle.SetActive(false);
            pistol.SetActive(true);
         }
@@ -40,6 +45,7 @@ public class WeaponSelect : MonoBehaviour
         {
             isRifle = false;
             isPistol = false;
+            isEmpty = true;
             rifle.SetActive(false);
             pistol.SetActive(false);
         }

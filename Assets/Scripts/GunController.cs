@@ -27,8 +27,15 @@ public class GunController : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            Fire();
-        }
+            if (!WeaponSelect.isEmpty)
+            {
+                Fire();
+            }
+            else
+            {
+                RuntimeManager.PlayOneShot(ReverbManager.RevInstance.clapSFX);
+            }
+        }   
     }
 
     public void Fire()

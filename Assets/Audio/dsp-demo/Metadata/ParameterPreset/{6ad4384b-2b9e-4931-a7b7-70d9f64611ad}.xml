@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <objects serializationModel="Studio.02.03.00">
-	<object class="ParameterPreset" id="{2c0512c0-bd55-48d4-be8d-23177daf7292}">
+	<object class="ParameterPreset" id="{6ad4384b-2b9e-4931-a7b7-70d9f64611ad}">
 		<property name="name">
-			<value>delayMix</value>
+			<value>lowFreq</value>
 		</property>
 		<relationship name="folder">
 			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
 		</relationship>
 		<relationship name="parameter">
-			<destination>{2c4f4dfb-a101-4b9d-bc86-d6dcac06a6e5}</destination>
+			<destination>{59cec7fa-ecbc-479f-bc7b-ac9edfe0740f}</destination>
 		</relationship>
 	</object>
-	<object class="GameParameter" id="{2c4f4dfb-a101-4b9d-bc86-d6dcac06a6e5}">
-		<property name="maximum">
+	<object class="GameParameter" id="{59cec7fa-ecbc-479f-bc7b-ac9edfe0740f}">
+		<property name="minimum">
 			<value>20</value>
+		</property>
+		<property name="maximum">
+			<value>1000</value>
 		</property>
 		<property name="isGlobal">
 			<value>true</value>
 		</property>
 		<property name="initialValue">
-			<value>0</value>
+			<value>1000</value>
 		</property>
 		<property name="isExposedRecursively">
 			<value>false</value>

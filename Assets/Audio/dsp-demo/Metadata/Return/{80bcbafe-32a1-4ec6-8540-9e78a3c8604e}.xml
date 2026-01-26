@@ -82,7 +82,7 @@
 			<value>0</value>
 		</property>
 		<property name="value">
-			<value>0</value>
+			<value>-80</value>
 		</property>
 	</object>
 	<object class="Automator" id="{170bebf9-e41f-410f-94b0-17de3be99e52}">

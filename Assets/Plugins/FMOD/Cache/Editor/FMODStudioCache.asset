@@ -66,7 +66,7 @@ MonoBehaviour:
   Name: density
   StudioPath: parameter:/density
   Min: 0
-  Max: 1
+  Max: 100
   Default: 0
   ID:
     data1: 507621343
@@ -90,7 +90,7 @@ MonoBehaviour:
   Name: dLateDelay
   StudioPath: parameter:/dLateDelay
   Min: 0
-  Max: 5000
+  Max: 500
   Default: 0
   ID:
     data1: 968010199
@@ -125,7 +125,7 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 1
   MaxDistance: 20
-  Length: 500
+  Length: 50
 --- !u!114 &-5605446580343659500
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
   Name: earlyDelay
   StudioPath: parameter:/earlyDelay
   Min: 0
-  Max: 20
+  Max: 300
   Default: 0
   ID:
     data1: 1049097934
@@ -165,10 +165,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639047385679387240
+  lastModified: 639050338490847805
   FileSizes:
   - Name: Desktop
-    Value: 179360
+    Value: 179936
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -184,9 +184,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: hfDecayRatio
   StudioPath: parameter:/hfDecayRatio
-  Min: 0
-  Max: 1
-  Default: 0
+  Min: 10
+  Max: 100
+  Default: 19
   ID:
     data1: 2530915802
     data2: 3714400277
@@ -209,7 +209,7 @@ MonoBehaviour:
   Name: lateDelay
   StudioPath: parameter:/lateDelay
   Min: 0
-  Max: 20
+  Max: 100
   Default: 0
   ID:
     data1: 2103098994
@@ -233,7 +233,7 @@ MonoBehaviour:
   Name: diffusion
   StudioPath: parameter:/diffusion
   Min: 0
-  Max: 1
+  Max: 100
   Default: 0
   ID:
     data1: 1344546621
@@ -257,7 +257,7 @@ MonoBehaviour:
   Name: dDiffusion
   StudioPath: parameter:/dDiffusion
   Min: 0
-  Max: 100
+  Max: 1
   Default: 0
   ID:
     data1: 616706802
@@ -351,17 +351,17 @@ MonoBehaviour:
   - {fileID: -5156096667222458465}
   - {fileID: 6214065512174954345}
   - {fileID: -8176496069664824784}
-  - {fileID: 68622444072466593}
   - {fileID: -2957846298535266187}
-  - {fileID: 1834915592135511255}
   - {fileID: -7677686626742110297}
   - {fileID: 5671683036403871263}
+  - {fileID: 6255069424385099918}
+  - {fileID: 8998729869032577098}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639047385679462460
+  cacheTime: 639050338490883599
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -373,30 +373,6 @@ MonoBehaviour:
     index: 3
   - key: event:/FootStepsRun
     index: 4
---- !u!114 &68622444072466593
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/delayMix
-  m_EditorClassIdentifier: 
-  Name: delayMix
-  StudioPath: parameter:/delayMix
-  Min: 0
-  Max: 20
-  Default: 0
-  ID:
-    data1: 1690220122
-    data2: 3443122310
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
 --- !u!114 &978090399546252162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,30 +400,6 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 250
---- !u!114 &1834915592135511255
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/delayOnOf
-  m_EditorClassIdentifier: 
-  Name: delayOnOf
-  StudioPath: parameter:/delayOnOf
-  Min: 0
-  Max: 1
-  Default: 0
-  ID:
-    data1: 113099103
-    data2: 1175483613
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
 --- !u!114 &2583587561185576945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -486,9 +438,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: reverbTime
   StudioPath: parameter:/reverbTime
-  Min: 0
-  Max: 40
-  Default: 0
+  Min: 100
+  Max: 20000
+  Default: 20000
   ID:
     data1: 3876511308
     data2: 2273914743
@@ -535,10 +487,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639047385679462460
+  lastModified: 639050338490883599
   FileSizes:
   - Name: Desktop
-    Value: 1606
+    Value: 1618
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:
@@ -554,12 +506,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: highCut
   StudioPath: parameter:/highCut
-  Min: 0
-  Max: 20
-  Default: 0
+  Min: 20
+  Max: 20000
+  Default: 20
   ID:
     data1: 2709689259
     data2: 3049462466
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &6255069424385099918
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/lowGain
+  m_EditorClassIdentifier: 
+  Name: lowGain
+  StudioPath: parameter:/lowGain
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 3843767230
+    data2: 723627540
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &8998729869032577098
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/lowFreq
+  m_EditorClassIdentifier: 
+  Name: lowFreq
+  StudioPath: parameter:/lowFreq
+  Min: 20
+  Max: 1000
+  Default: 1000
+  ID:
+    data1: 2018694613
+    data2: 3211120037
   Type: 0
   IsGlobal: 1
   Labels: []

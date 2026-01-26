@@ -6142,7 +6142,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &126953809
 Transform:
   m_ObjectHideFlags: 0
@@ -10059,6 +10059,13 @@ MonoBehaviour:
       Data3: 381978500
       Data4: -830050339
     Path: event:/Pistol
+  clapSFX:
+    Guid:
+      Data1: 206147806
+      Data2: 1286915523
+      Data3: 1445915300
+      Data4: -2122279670
+    Path: event:/Clap
   walkSFX:
     Guid:
       Data1: -1622357153
@@ -10073,6 +10080,9 @@ MonoBehaviour:
       Data3: 695691694
       Data4: -542574540
     Path: event:/FootStepsRun
+  reverbTimeText: {fileID: 317819011}
+  roomDataText: {fileID: 167637192}
+  roomModeText: {fileID: 623155919}
 --- !u!43 &208344149
 Mesh:
   m_ObjectHideFlags: 0
@@ -12631,8 +12641,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8616685848737228372, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
-      insertIndex: -1
+      insertIndex: 2
       addedObject: {fileID: 1800207893}
+    - targetCorrespondingSourceObject: {fileID: 8616685848737228372, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
+      insertIndex: 3
+      addedObject: {fileID: 1800207906}
     - targetCorrespondingSourceObject: {fileID: 8616685848737228372, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1800207900}
@@ -22370,7 +22383,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &416347657
 Transform:
   m_ObjectHideFlags: 0
@@ -39724,7 +39737,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &772103647
 Transform:
   m_ObjectHideFlags: 0
@@ -45054,7 +45067,7 @@ Transform:
   m_GameObject: {fileID: 894017044}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -15.36, y: -14.391254, z: -40.34323}
+  m_LocalPosition: {x: -25.97, y: -14.391254, z: -40.34323}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -75435,8 +75448,8 @@ RectTransform:
   - {fileID: 1647677860}
   - {fileID: 2016486046}
   - {fileID: 317819010}
-  - {fileID: 623155918}
   - {fileID: 167637191}
+  - {fileID: 623155918}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -75464,7 +75477,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1510441126
 Transform:
   m_ObjectHideFlags: 0
@@ -81638,7 +81651,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1627952927
 Transform:
   m_ObjectHideFlags: 0
@@ -86839,7 +86852,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1726908691
 Transform:
   m_ObjectHideFlags: 0
@@ -91173,59 +91186,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c95b6d869b024d54aa2f24a491850d71, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  clapSFX:
-    Guid:
-      Data1: 206147806
-      Data2: 1286915523
-      Data3: 1445915300
-      Data4: -2122279670
-    Path: event:/Clap
-  maxDistance: 99
+  maxDistance: 40
+  nodeSize: 2
+  WallLayer:
+    serializedVersion: 2
+    m_Bits: 64
+  reverbSizePar: 0.015
   frontText: {fileID: 1901860841}
   backText: {fileID: 126352526}
   leftText: {fileID: 368126462}
   rightText: {fileID: 234612111}
   upText: {fileID: 1647677861}
   downText: {fileID: 2016486047}
-  reverbTimeText: {fileID: 317819011}
-  roomDataText: {fileID: 167637192}
-  roomModeText: {fileID: 623155919}
-  definedMaterials:
-  - tag: wallMarble
-    hardness: 0.8
-    jagness: 0.2
-  - tag: wallConcrete
-    hardness: 0.6
-    jagness: 0.4
-  - tag: wallSolid
-    hardness: 0.5
-    jagness: 0.4
-  - tag: wallWood
-    hardness: 0.4
-    jagness: 0.8
-  - tag: wallDiagonal
-    hardness: 1
-    jagness: 1
-  - tag: wallWindow
-    hardness: 1
-    jagness: 1
-  - tag: wallDoor
-    hardness: 1
-    jagness: 1
-  - tag: floor
-    hardness: 1
-    jagness: 0.5
-  - tag: ceiling
-    hardness: 1
-    jagness: 0.5
-  - tag: diagonalCeiling
-    hardness: 1
-    jagness: 1
-  WallLayer:
-    serializedVersion: 2
-    m_Bits: 64
-  scanInterval: 0.1
-  reverbSizePar: 0.03
+  databaseFile: {fileID: 11400000, guid: 679a01e9345bd3a4abafbc9924bb4450, type: 2}
+  distances:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  hardnesses:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  jagnesses:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  dEarlyDelay: 0
+  dLateDelay: 0
+  dFeedBack: 0
+  gridAnchorPoint: {x: 0, y: 0, z: 0}
+  hasGridAnchor: 0
 --- !u!114 &1800207900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91240,6 +91239,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rifle: {fileID: 1633266683}
   pistol: {fileID: 662612419}
+--- !u!114 &1800207906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 236797912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5951da481135e8438fb30e823c0ce8e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scanInterval: 0.01
+  totalRoomVolume: 0
+  totalRoomHardness: 0
+  totalRoomJagness: 0
 --- !u!4 &1803420981 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3239287078342634494, guid: 1eff8f9b99761af4d9ca291e21553922, type: 3}
@@ -111444,6 +111459,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 207000326}
   - {fileID: 416347657}
   - {fileID: 705507995}
   - {fileID: 243687702}
@@ -111456,5 +111472,4 @@ SceneRoots:
   - {fileID: 2004345708}
   - {fileID: 601371420}
   - {fileID: 1507553517}
-  - {fileID: 207000326}
   - {fileID: 1627952927}

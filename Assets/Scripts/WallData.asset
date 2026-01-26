@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1aefbc3c2679cda418aa05dcb5e51947, type: 3}
+  m_Name: WallData
+  m_EditorClassIdentifier: 
+  allMaterials:
+  - tag: wallSolid
+    hardness: 0.5
+    jagness: 0.5
+  - tag: wallWood
+    hardness: 0.4
+    jagness: 0.6
+  - tag: wallConcrete
+    hardness: 0.6
+    jagness: 0.4
+  - tag: wallMarble
+    hardness: 0.8
+    jagness: 0.2
+  - tag: ceiling
+    hardness: 0.4
+    jagness: 0.4
+  - tag: floor
+    hardness: 0.4
+    jagness: 0.4
+  - tag: plane
+    hardness: 0.4
+    jagness: 0.4
+  - tag: 
+    hardness: 0
+    jagness: 0
+  - tag: 
+    hardness: 0
+    jagness: 0
+  - tag: 
+    hardness: 0
+    jagness: 0
