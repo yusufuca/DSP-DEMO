@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="MixerGroup" id="{251b856a-0e56-4eb9-8314-51040face50f}">
+		<property name="name">
+			<value>Main</value>
+		</property>
+		<relationship name="effectChain">
+			<destination>{89f8b86d-59fb-469a-9430-1055e7cf960a}</destination>
+		</relationship>
+		<relationship name="panner">
+			<destination>{4eab311b-7f04-49c6-a2c0-5aac2ab5bd15}</destination>
+		</relationship>
+		<relationship name="output">
+			<destination>{c2b399fb-9b85-4f3d-aaba-c2ddd007c17e}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusEffectChain" id="{89f8b86d-59fb-469a-9430-1055e7cf960a}">
+		<relationship name="effects">
+			<destination>{4b0796d6-05ae-4eef-83ce-0f68f036908b}</destination>
+			<destination>{d727253b-66d3-4edd-b5f4-1033d9b2e618}</destination>
+			<destination>{fec1b070-735d-4b47-a687-5afcedd8fcb2}</destination>
+			<destination>{06fc0427-262e-4709-87b4-880275e69391}</destination>
+		</relationship>
+	</object>
+	<object class="MixerBusPanner" id="{4eab311b-7f04-49c6-a2c0-5aac2ab5bd15}" />
+	<object class="MultibandEqEffect" id="{4b0796d6-05ae-4eef-83ce-0f68f036908b}">
+		<property name="filterTypeA">
+			<value>2</value>
+		</property>
+		<property name="frequencyA">
+			<value>5200</value>
+		</property>
+	</object>
+	<object class="MixerBusFader" id="{d727253b-66d3-4edd-b5f4-1033d9b2e618}" />
+	<object class="MixerSend" id="{fec1b070-735d-4b47-a687-5afcedd8fcb2}">
+		<property name="level">
+			<value>0</value>
+		</property>
+		<property name="inputFormat">
+			<value>0</value>
+		</property>
+		<relationship name="mixerReturn">
+			<destination>{76883a22-aa74-4ea1-8094-7cd381879d92}</destination>
+		</relationship>
+	</object>
+	<object class="MixerSend" id="{06fc0427-262e-4709-87b4-880275e69391}">
+		<property name="level">
+			<value>0</value>
+		</property>
+		<property name="inputFormat">
+			<value>0</value>
+		</property>
+		<relationship name="mixerReturn">
+			<destination>{80bcbafe-32a1-4ec6-8540-9e78a3c8604e}</destination>
+		</relationship>
+	</object>
+</objects>

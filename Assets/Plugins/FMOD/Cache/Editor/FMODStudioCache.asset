@@ -141,10 +141,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639051233876697096
+  lastModified: 639051452255945503
   FileSizes:
   - Name: Desktop
-    Value: 183936
+    Value: 1114400
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -166,6 +166,54 @@ MonoBehaviour:
   ID:
     data1: 2530915802
     data2: 3714400277
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &-5075015430857453050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/OccVol
+  m_EditorClassIdentifier: 
+  Name: OccVol
+  StudioPath: parameter:/OccVol
+  Min: -80
+  Max: 10
+  Default: 0
+  ID:
+    data1: 1564243121
+    data2: 3464036158
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &-4880056564780587955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/OccEQ
+  m_EditorClassIdentifier: 
+  Name: OccEQ
+  StudioPath: parameter:/OccEQ
+  Min: 10
+  Max: 22000
+  Default: 22000
+  ID:
+    data1: 3597909786
+    data2: 3295044667
   Type: 0
   IsGlobal: 1
   Labels: []
@@ -296,6 +344,33 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 651
+--- !u!114 &-19969244736605186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/MusicLoops
+  m_EditorClassIdentifier: 
+  Path: event:/MusicLoops
+  Guid:
+    Data1: 1634118457
+    Data2: 1273375067
+    Data3: -814191715
+    Data4: -706888489
+  Banks:
+  - {fileID: -5301400106237859156}
+  IsStream: 1
+  Is3D: 0
+  IsOneShot: 1
+  Parameters: []
+  MinDistance: 4.8
+  MaxDistance: 8
+  Length: 16056
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -317,6 +392,7 @@ MonoBehaviour:
   - {fileID: -2873935296831473075}
   - {fileID: -8510619116720217654}
   - {fileID: -745391855228461207}
+  - {fileID: -19969244736605186}
   EditorParameters:
   - {fileID: 2802092296333379079}
   - {fileID: -4734576490075718714}
@@ -334,12 +410,14 @@ MonoBehaviour:
   - {fileID: 3493219100641043508}
   - {fileID: 365925564699357963}
   - {fileID: -2157548165149385607}
+  - {fileID: -4880056564780587955}
+  - {fileID: -5075015430857453050}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639051233876758007
+  cacheTime: 639051452255985639
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -351,6 +429,8 @@ MonoBehaviour:
     index: 3
   - key: event:/FootStepsRun
     index: 4
+  - key: event:/MusicLoops
+    index: 5
 --- !u!114 &365925564699357963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,7 +495,7 @@ MonoBehaviour:
   m_Name: parameter:/onOF
   m_EditorClassIdentifier: 
   Name: onOF
-  StudioPath: parameter:/onOF
+  StudioPath: parameter:/OnOF
   Min: 0
   Max: 1
   Default: 0
@@ -463,7 +543,7 @@ MonoBehaviour:
   m_Name: parameter:/outdoorReverbTime
   m_EditorClassIdentifier: 
   Name: outdoorReverbTime
-  StudioPath: parameter:/outdoorReverbTime
+  StudioPath: parameter:/OutdoorReverbTime
   Min: 100
   Max: 20000
   Default: 498
@@ -489,10 +569,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639051233876758007
+  lastModified: 639051452255985639
   FileSizes:
   - Name: Desktop
-    Value: 1698
+    Value: 1944
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:

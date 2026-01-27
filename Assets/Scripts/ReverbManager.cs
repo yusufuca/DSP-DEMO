@@ -20,6 +20,8 @@ public class ReverbManager : MonoBehaviour
         {
             RevInstance = this;
         }
+
+       
     }
 
     private FMOD.Studio.PARAMETER_ID reverbTimeID, earlyDelayID, lateDelayID, onOFID, diffusionID, densityID, hfDecayID, hfRefID,
@@ -30,6 +32,9 @@ public class ReverbManager : MonoBehaviour
     public EventReference clapSFX;
     public EventReference walkSFX;
     public EventReference runSFX;
+    public EventReference musicLoops;
+
+    private EventInstance musicInstance;
 
     public TextMeshProUGUI reverbTimeText;
     public TextMeshProUGUI roomDataText;

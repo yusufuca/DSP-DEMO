@@ -66,7 +66,6 @@ public class FloodFill : MonoBehaviour
                     if (!isInRoom || isDirty)
                     {
                     
-                        Debug.Log($"<color=green>FloodFill Başlatılıyor...</color> (Sebep: Yeni Oda={!isInRoom}, Kirli={isDirty})");
                         Fill();
                         
                         if (totalRoomVolume > 0.1f)
@@ -81,10 +80,7 @@ public class FloodFill : MonoBehaviour
                    
 
                 }
-                else
-                {
-                    Debug.LogWarning("FloodFill Bekliyor: Tavan var ama 'Grid Anchor' henüz oluşmadı. Lütfen bir duvara bak!");
-                }
+                
             }
             else
             {
@@ -92,7 +88,7 @@ public class FloodFill : MonoBehaviour
                 if (isInRoom)
                 {
                     isInRoom = false;
-                    Debug.Log("<color=red>Odadan Çıkıldı.</color> (Tavan Algılanmıyor)");
+                   
                 }
                 scanTimer = 0f;
             }

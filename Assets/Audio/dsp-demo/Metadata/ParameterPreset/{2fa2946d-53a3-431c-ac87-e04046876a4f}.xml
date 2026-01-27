@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{2fa2946d-53a3-431c-ac87-e04046876a4f}">
+		<property name="name">
+			<value>Occlusion</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{d8032c34-efe5-4092-886b-31b383ff9af0}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{d8032c34-efe5-4092-886b-31b383ff9af0}">
+		<property name="minimum">
+			<value>-80</value>
+		</property>
+		<property name="maximum">
+			<value>10</value>
+		</property>
+		<property name="initialValue">
+			<value>-80</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>
