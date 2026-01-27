@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{9dd2dbe9-8384-46bb-ab50-a82f3ea1b11c}">
+		<property name="name">
+			<value>dReverbMix</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{b52a392c-5b1b-4306-9782-c5cc4daad9de}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{b52a392c-5b1b-4306-9782-c5cc4daad9de}">
+		<property name="minimum">
+			<value>-80</value>
+		</property>
+		<property name="maximum">
+			<value>10</value>
+		</property>
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>-80</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+		<relationship name="modulators">
+			<destination>{5cf3e53c-3971-410c-8f3d-4fac05350898}</destination>
+		</relationship>
+	</object>
+	<object class="ADSRModulator" id="{5cf3e53c-3971-410c-8f3d-4fac05350898}">
+		<property name="nameOfPropertyBeingModulated">
+			<value>cursorPosition</value>
+		</property>
+	</object>
+</objects>

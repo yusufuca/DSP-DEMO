@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using Unity.VisualScripting;
@@ -58,7 +58,10 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
 
     public GameObject nextPrefab;
-    
+    public GameObject roomTypePrefab;
+    private int roomType;
+
+
     public int roomSize = 10;
     public int wallHeight = 4;
     public int wallWidth = 4;
@@ -74,7 +77,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
     [Range(0, 100)] public int diagonalChance = 50; 
 
     private HashSet<Vector2Int> pickedTiles = new HashSet<Vector2Int>();
-    private List<GameObject> spawnedObjects = new List<GameObject>();
+   
 
     private bool isDoorSpawned = false;
 
@@ -100,31 +103,37 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             
     }
 
-    public void GenerateHouse(Vector2Int pos)
+    public void GenerateHouse(Vector2Int pos, Transform roadParent)
     {
        
         int houseSpecificSeed = gameSeed + (pos.x * 1000) + (pos.y * 100);
         rng = new System.Random(houseSpecificSeed);
 
 
-       
-            ClearHouse();
-      
+        pickedTiles.Clear();
         isDoorSpawned = false;
+        RoomTypePicker();
         NextPrefabPicker();
-        GenerateTileMap(pos);
-        
+
+   
+
+        GenerateTileMap(pos, roadParent);
+
+       
 
     }
 
-    void GenerateTileMap(Vector2Int Pos) 
+    void GenerateTileMap(Vector2Int Pos, Transform roadParent) 
     {
        //FloorPlan
 
         Vector2Int currentPos = Pos;
         pickedTiles.Add(currentPos);
 
-        for (int i = 0; i < roomSize; i++) 
+        int buildingSize = rng.Next(10, 50);
+        Debug.Log($"RoomSize is: {buildingSize}");
+
+        for (int i = 0; i < buildingSize; i++) 
         {
             Vector2Int direction = RandomDirection();
             currentPos += direction;
@@ -136,9 +145,12 @@ public class ProceduralBuildingGenerator : MonoBehaviour
            // SpawnFloor(tilepos);
            // SpawnCeiling(tilepos);
 
-            CheckAndSpawn(tilepos);
+            CheckAndSpawn(tilepos,roadParent);
             
         }
+
+
+      
 
     }
 
@@ -153,7 +165,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
                 
     }
 
-    void CheckAndSpawn(Vector2Int pos)
+    void CheckAndSpawn(Vector2Int pos, Transform roadParent)
     {
         int ws = wallWidth /2;
         
@@ -177,7 +189,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             //up left corner
             if (!up && !left && rng.Next(0, 100) < diagonalChance)
             {
-                SpawnDiagonalWalls(pos, 315);
+                SpawnDiagonalWalls(pos, 315, roadParent);
                 blockUp = true;
                 blockLeft = true;
 
@@ -187,7 +199,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             //up right corner
             if (!up && !right && rng.Next(0, 100) < diagonalChance)
             {
-                SpawnDiagonalWalls(pos, 45);
+                SpawnDiagonalWalls(pos, 45, roadParent);
                 blockUp = true;
                 blockRight = true;
 
@@ -197,7 +209,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             // down left corner
             if (!down && !left && rng.Next(0, 100) < diagonalChance)
             {
-                SpawnDiagonalWalls(pos, 225);
+                SpawnDiagonalWalls(pos, 225, roadParent);
                 blockDown = true;
                 blockLeft = true;
 
@@ -208,7 +220,7 @@ public class ProceduralBuildingGenerator : MonoBehaviour
             // down right corner
             if (!down && !right && rng.Next(0, 100) < diagonalChance)
             {
-                SpawnDiagonalWalls(pos, 135);
+                SpawnDiagonalWalls(pos, 135, roadParent);
                 blockDown = true;
                 blockRight = true;
 
@@ -218,13 +230,13 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         }
             if (isDiagonal)
             {
-                SpawnDiagonalCeiling(pos, rot);
-                SpawnDiagonalFloor(pos, rot);
+                SpawnDiagonalCeiling(pos, rot, roadParent);
+                SpawnDiagonalFloor(pos, rot, roadParent);
             }
             else
             {
-                SpawnCeiling(pos);
-                SpawnFloor(pos);
+                SpawnCeiling(pos, roadParent);
+                SpawnFloor(pos, roadParent);
             }
 
         
@@ -235,10 +247,10 @@ public class ProceduralBuildingGenerator : MonoBehaviour
 
        
 
-        if (!left && !blockLeft) { SpawnWalls(pos, 270, ws * Vector3.left); }
-        if (!right && !blockRight) { SpawnWalls(pos, 90, ws * Vector3.right); }
-        if (!up && !blockUp) { SpawnWalls(pos, 0, ws*Vector3.forward); }
-        if(!down&& !blockDown) { SpawnWalls(pos,180, ws* Vector3.back); }
+        if (!left && !blockLeft) { SpawnWalls(pos, 270, ws * Vector3.left, roadParent); }
+        if (!right && !blockRight) { SpawnWalls(pos, 90, ws * Vector3.right, roadParent); }
+        if (!up && !blockUp) { SpawnWalls(pos, 0, ws*Vector3.forward, roadParent); }
+        if(!down&& !blockDown) { SpawnWalls(pos,180, ws* Vector3.back, roadParent); }
 
 
     }
@@ -255,10 +267,31 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         else
         {
 
-
+            // wall or window picker
             if (rng.Next(0, 100) > 10)
             {
-                nextPrefab = wallSolidPrefab;
+               if(roomType == 3)
+                {
+                    int randomWallPick = rng.Next(0,3);
+                    if (randomWallPick == 0)
+                    {
+                        nextPrefab = wallWood;
+                    }
+                    if(randomWallPick == 1)
+                    {
+                        nextPrefab = wallConcrete;
+                    }
+                    if(randomWallPick == 2)
+                    {
+                        nextPrefab = wallMarble;
+                    }
+                }
+                else
+                {
+                    nextPrefab = roomTypePrefab;
+                }
+
+                    
             }
             else
             {
@@ -268,7 +301,25 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         }
     }
 
-    private void SpawnWalls(Vector2Int tilepos, float rot,Vector3 offset)
+    void RoomTypePicker()
+    {
+         roomType = rng.Next(0, 4);
+        if(roomType == 0)
+        {
+            roomTypePrefab = wallWood;
+        }
+        if(roomType == 1)
+        {
+            roomTypePrefab = wallConcrete;
+        }
+        if(roomType == 2)
+        {
+            roomTypePrefab = wallMarble;
+        }
+    
+    }
+
+    private void SpawnWalls(Vector2Int tilepos, float rot,Vector3 offset, Transform roadParent)
     {
 
         
@@ -277,68 +328,59 @@ public class ProceduralBuildingGenerator : MonoBehaviour
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
         Vector3 finalPos = worldPos + offset;
         Quaternion rotation = Quaternion.Euler(0, rot, 0);
-        GameObject obj = Instantiate(nextPrefab, finalPos, rotation, transform);
-        spawnedObjects.Add(obj);
+        Instantiate(nextPrefab, finalPos, rotation, roadParent);
 
+     
         NextPrefabPicker();
         
 
     }
-    private void SpawnDiagonalWalls(Vector2Int tilepos, float rot)
+    private void SpawnDiagonalWalls(Vector2Int tilepos, float rot,Transform roadParent)
     {
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 2, tilepos.y * wallHeight);
         
         Quaternion rotation = Quaternion.Euler(0, rot, 0);
 
-        GameObject obj = Instantiate(wallDiagonalPrefab, worldPos, rotation, transform);
-        spawnedObjects.Add(obj);
+         Instantiate(wallDiagonalPrefab, worldPos, rotation, roadParent);
+        
     }
 
-    private void SpawnFloor(Vector2Int tilepos)
+    private void SpawnFloor(Vector2Int tilepos, Transform roadParent)
     {
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 0, tilepos.y * wallHeight);
-        GameObject obj = Instantiate(floorPrefab,worldPos, Quaternion.identity, transform);
+        Instantiate(floorPrefab,worldPos, Quaternion.identity, roadParent);
 
-        spawnedObjects.Add(obj);
+        
     }
-    private void SpawnCeiling(Vector2Int tilepos)
+    private void SpawnCeiling(Vector2Int tilepos, Transform roadParent)
     {
 
         
 
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, wallHeight, tilepos.y * wallHeight);
-        GameObject obj = Instantiate(ceilingPrefab, worldPos, Quaternion.identity, transform);
+        Instantiate(ceilingPrefab, worldPos, Quaternion.identity, roadParent);
 
-        spawnedObjects.Add(obj);
+        
 
 
     }
 
-    private void SpawnDiagonalFloor(Vector2Int tilepos, float rot)
+    private void SpawnDiagonalFloor(Vector2Int tilepos, float rot, Transform roadParent)
     {
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, 0, tilepos.y*wallHeight);
         Quaternion rotation = Quaternion.Euler(0,rot, 0);   
-        GameObject obj = Instantiate(ceilingDiagonalPrefab, worldPos, rotation, transform); 
+        Instantiate(ceilingDiagonalPrefab, worldPos, rotation, roadParent); 
 
-        spawnedObjects.Add(obj);
+       
     }
-    private void SpawnDiagonalCeiling(Vector2Int tilepos, float rot)
+    private void SpawnDiagonalCeiling(Vector2Int tilepos, float rot, Transform roadParent)
     {
         Vector3 worldPos = new Vector3(tilepos.x * wallWidth, wallHeight, tilepos.y * wallHeight);
         Quaternion rotation = Quaternion.Euler(0, rot, 0);
-        GameObject obj = Instantiate(ceilingDiagonalPrefab, worldPos, rotation, transform);
+        Instantiate(ceilingDiagonalPrefab, worldPos, rotation, roadParent);
 
-        spawnedObjects.Add(obj);
+        
     }
-    public void ClearHouse()
-    {
-        // Destroy all the old game objects
-        foreach (GameObject obj in spawnedObjects)
-        {
-            if (obj != null) Destroy(obj);
-        }
-        spawnedObjects.Clear();
-        pickedTiles.Clear();
-    }
+    
 
 }

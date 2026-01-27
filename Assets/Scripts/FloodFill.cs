@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,7 +19,13 @@ public class FloodFill : MonoBehaviour
     }
 
     private DetectingWall detect;
-    
+
+    [Header("Optimization Settings")]
+    private bool isInRoom = false;
+    private bool isDirty = true;
+
+
+
     public float scanInterval = 1f;
     private float scanTimer = 0f;
 
@@ -39,19 +45,66 @@ public class FloodFill : MonoBehaviour
     private void Start()
     {
         detect = DetectingWall.DetectInstance;
+
+        scanTimer = scanInterval;
+
     }
+
+
+
 
     void Update()
     {
         scanTimer += Time.deltaTime;
-        if (scanTimer >= scanInterval)
-        {
-            if (detect.distances[4] > 0 && detect.hasGridAnchor)
+
+       
+            
+            if (detect.distances[4] > 0)
             {
-                Fill();
+                if (detect.hasGridAnchor)
+                {
+                    if (!isInRoom || isDirty)
+                    {
+                    
+                        Debug.Log($"<color=green>FloodFill Başlatılıyor...</color> (Sebep: Yeni Oda={!isInRoom}, Kirli={isDirty})");
+                        Fill();
+                        
+                        if (totalRoomVolume > 0.1f)
+                        {
+                            if (scanTimer >= scanInterval)
+                            {
+                            isInRoom = true;
+                            isDirty = false;
+                            }
+                        }
+                    }
+                   
+
+                }
+                else
+                {
+                    Debug.LogWarning("FloodFill Bekliyor: Tavan var ama 'Grid Anchor' henüz oluşmadı. Lütfen bir duvara bak!");
+                }
             }
-            scanTimer = 0;
-        }
+            else
+            {
+                
+                if (isInRoom)
+                {
+                    isInRoom = false;
+                    Debug.Log("<color=red>Odadan Çıkıldı.</color> (Tavan Algılanmıyor)");
+                }
+                scanTimer = 0f;
+            }
+            
+    }
+    
+
+
+
+    public void ForceRefresh()
+    {
+        isDirty = true;
     }
 
     Vector3 SnapToGrid()
@@ -80,6 +133,8 @@ public class FloodFill : MonoBehaviour
     {
         wallQueue.Clear();
         visited.Clear();
+
+
         float nodeSize = detect.nodeSize;
         float accumulatedHardness = 0f;
         float accumulatedJagness = 0f;
@@ -90,6 +145,8 @@ public class FloodFill : MonoBehaviour
         Vector3 rawStart = SnapToGrid();
         Vector3 safeStart = rawStart;
         bool foundSafeSpot = true;
+
+
         if (IsWall(rawStart))
         {
             foundSafeSpot = false;
@@ -113,7 +170,7 @@ public class FloodFill : MonoBehaviour
 
         int volumeCounter = 0;
         float debugSize = (nodeSize / 2f) * 0.9f;
-        while (wallQueue.Count > 0 && volumeCounter < 200)
+        while (wallQueue.Count > 0 && volumeCounter < 10000)
         {
             Vector3 currentPos = wallQueue.Dequeue();
             volumeCounter++;
@@ -159,6 +216,8 @@ public class FloodFill : MonoBehaviour
 
 
         }
+
+
         float voxelVolume = nodeSize * nodeSize;
         totalRoomVolume = volumeCounter * voxelVolume;
         if (totalWallsTouched > 0)

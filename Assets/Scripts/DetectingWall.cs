@@ -76,7 +76,9 @@ public class DetectingWall : MonoBehaviour
     public float dLateDelay;
     public float dFeedBack;
 
-    private Vector3[] wallOrigins = new Vector3[6];
+    public Vector3[] wallOrigins = new Vector3[6];
+    public Vector3[] wallNormals = new Vector3[6];
+
     private Quaternion[] wallRotations = new Quaternion[6];
     private Sensor[] sensors;
 
@@ -155,6 +157,7 @@ public class DetectingWall : MonoBehaviour
             Vector3 origin = transform.position + (Vector3.up);
             Sensor s = sensors[i];
             distances[i] = maxDistance;
+            wallNormals[i] = Vector3.up;
 
             Vector3 currentWorldDir = transform.TransformDirection(s.dir);
             Vector3 rawDir = currentWorldDir;
@@ -179,6 +182,8 @@ public class DetectingWall : MonoBehaviour
                 string hitTag = hit.collider.tag;
 
                 wallOrigins[i] = hit.point;
+           
+                wallNormals[i] = hit.normal;
                 wallRotations[i] = hit.transform.rotation;
                 Vector3 checkPosOrigin = hit.transform.position;
     ;
@@ -212,7 +217,9 @@ public class DetectingWall : MonoBehaviour
                 distances[i] = 0;
                 jagnesses[i] = 0;
                 wallOrigins[i] = Vector3.zero;
-             
+                wallNormals[i] = Vector3.zero;
+
+
                 s.ui.text = $"{s.name} Distance: {distances[i]}";
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
      

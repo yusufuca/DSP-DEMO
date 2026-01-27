@@ -32,7 +32,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
     }
 
 
-    void Converter(float xPos, float yPos)
+    void Converter(float xPos, float yPos, GameObject roadObj)
     {
         var houseGen = ProceduralBuildingGenerator.HouseInstance;
 
@@ -40,7 +40,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
         int yHousePos = Mathf.RoundToInt(yPos / houseGen.wallWidth);
 
         Vector2Int housePos = new Vector2Int(xHousePos, yHousePos);
-        houseGen.GenerateHouse(housePos);
+        houseGen.GenerateHouse(housePos, roadObj.transform);
     }
 
     public void zPosCheck()
@@ -51,7 +51,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
             float spawnZ = zPositiveThreshold + 30f;
 
             SpawnRoad(currentX, spawnZ);
-            Converter(currentX, spawnZ);
+          
             zPositiveThreshold += roadSize;
             zNegativeThreshold += roadSize;
         }
@@ -59,7 +59,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
         {
             float spawnZ = zNegativeThreshold - 30f;
             SpawnRoad(currentX, spawnZ);
-            Converter(currentX, spawnZ);
+           
             zNegativeThreshold -= roadSize;
             zPositiveThreshold -= roadSize;
         }
@@ -75,7 +75,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
             float spawnX = xPositiveThreshold + 30f;
 
             SpawnRoad(spawnX, currentZ);
-            Converter(spawnX, currentZ);
+        
             xPositiveThreshold += roadSize;
             xNegativeThreshold += roadSize;
         }
@@ -83,7 +83,7 @@ public class ProceduralRoadGenerator : MonoBehaviour
         {
             float spawnX = xNegativeThreshold - 30f;
             SpawnRoad(spawnX, currentZ);
-            Converter(spawnX, currentZ);
+      
             xNegativeThreshold -= roadSize;
             xPositiveThreshold -= roadSize;
         }
@@ -93,15 +93,31 @@ public class ProceduralRoadGenerator : MonoBehaviour
     public void SpawnRoad(float xPos, float zPos)
     {
         Vector3Int currentRoadPos = new Vector3Int (Mathf.RoundToInt(xPos),0,Mathf.RoundToInt(zPos));
+
+        if (roadPos.Contains(currentRoadPos))
+        {
+            return; 
+        }
+
         roadPos.Add(currentRoadPos);
         
         GameObject newRoad = Instantiate(roadPrefab, new Vector3(xPos, 0, zPos), Quaternion.identity);
+
+        Converter(xPos, zPos, newRoad);
 
         roadQueue.Enqueue(newRoad);
 
         if (roadQueue.Count > maxActiveRoads )
         {
             GameObject oldRoad = roadQueue.Dequeue();
+
+            Vector3Int oldPos = new Vector3Int(Mathf.RoundToInt(oldRoad.transform.position.x), 0, Mathf.RoundToInt(oldRoad.transform.position.z));
+
+            if (roadPos.Contains(oldPos))
+            {
+                roadPos.Remove(oldPos);
+            }
+
             Destroy(oldRoad);
         }
 

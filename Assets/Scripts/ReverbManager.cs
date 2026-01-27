@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using FMODUnity;
@@ -10,7 +10,6 @@ public class ReverbManager : MonoBehaviour
 {
     public static ReverbManager RevInstance { get; private set; }
 
- 
     private void Awake()
     {
         if (RevInstance != null && RevInstance != this)
@@ -23,7 +22,8 @@ public class ReverbManager : MonoBehaviour
         }
     }
 
-    private FMOD.Studio.PARAMETER_ID reverbTimeID, earlyDelayID, lateDelayID, onOFID, diffusionID, densityID, hfDecayID, hfRefID, highCutID, delayMixID, dEarlyID, dLateID, dDiffID, lowGainID, lowFreqID;
+    private FMOD.Studio.PARAMETER_ID reverbTimeID, earlyDelayID, lateDelayID, onOFID, diffusionID, densityID, hfDecayID, hfRefID,
+        highCutID, delayMixID, dLateID, dHighCutID, outdoorReverbTimeID, dFeedbackID, lowGainID, lowFreqID, dReverbMixID;
 
     public EventReference rifleSfx;
     public EventReference pistolSfx;
@@ -37,11 +37,23 @@ public class ReverbManager : MonoBehaviour
 
     private DetectingWall detect;
     private FloodFill fill;
+
+    [Header("Outdoor / Probe Settings")]
+    public float maxProbeDistance = 50f;
+
+ 
+    private float dLateDelayCalc = 0f;
+    private float dFeedbackCalc = 0f;
+    private float dDiffusionCalc = 0f;
+    private float dHighCutCalc = 20000f;
+    private float outMixCalc = 0f; 
+    private float outdoorReverbTimeCalc = 0f;
+    private float dReverbMixCalc = 0f; 
     private void Start()
     {
         detect = DetectingWall.DetectInstance;
         fill = FloodFill.FillInstance;
-        
+
         GetParamID("reverbTime", out reverbTimeID);
         GetParamID("earlyDelay", out earlyDelayID);
         GetParamID("lateDelay", out lateDelayID);
@@ -52,184 +64,266 @@ public class ReverbManager : MonoBehaviour
         GetParamID("hfReference", out hfRefID);
         GetParamID("highCut", out highCutID);
         GetParamID("delayMix", out delayMixID);
-        GetParamID("dEarlyDelay", out dEarlyID);
+
         GetParamID("dLateDelay", out dLateID);
-        GetParamID("dDiffusion", out dDiffID);
+       
+
         GetParamID("lowGain", out lowGainID);
         GetParamID("lowFreq", out lowFreqID);
+
+        GetParamID("outdoorReverbTime", out outdoorReverbTimeID);
+        GetParamID("dHighCut", out dHighCutID);
+        GetParamID("dFeedback", out dFeedbackID);
+
+        GetParamID("dReverbMix", out dReverbMixID);
     }
 
     private void Update()
     {
         ParameterUpdater();
     }
+
     void GetParamID(string name, out FMOD.Studio.PARAMETER_ID id)
     {
         FMOD.Studio.PARAMETER_DESCRIPTION desc;
         RuntimeManager.StudioSystem.getParameterDescriptionByName(name, out desc);
         id = desc.id;
     }
+
     void ParameterUpdater()
     {
-        
 
-        float totalDistances = 0f;
+        bool isIndoors = detect.distances[4] > 0 && detect.distances[4] < 20f;
 
-        for (int i = 0; i < 6; i++) totalDistances += detect.distances[i] / 6;
-
-        float totalHardness = 0f;
-
-        for (int i = 0; i < 6; i++) totalHardness += detect.hardnesses[i] / 6;
-
-        float totalJagness = 0f;
-
-        for (int i = 0; i < 6; i++) totalJagness += detect  .jagnesses[i] / 6;
 
         float mainRoomVolume = fill.totalRoomVolume * (detect.distances[4] + detect.distances[5]);
-
         float minWallDist = detect.maxDistance;
-        /* REVERB TIME */
+        for (int i = 0; i < 4; i++) { if (detect.distances[i] > 0 && detect.distances[i] < minWallDist) minWallDist = detect.distances[i]; }
+
+        float rawReverbTime = mainRoomVolume * fill.totalRoomHardness * detect.reverbSizePar * 1000f;
+        float finalReverbTime = Mathf.Clamp(rawReverbTime, 100f, 20000f);
 
 
-
-        float rawReverbTime = mainRoomVolume * fill.totalRoomHardness * detect.reverbSizePar * 1000;
-        float minReverbFmodTime = 100f;
-        float maxReverbFmodTime = 20000f;
-        float reverbTime = Mathf.Clamp(rawReverbTime, minReverbFmodTime, maxReverbFmodTime);
-     
+        float rawEarlyDelay = (minWallDist / 343f) * 1000f;
+        float finalEarlyDelay = Mathf.Clamp(rawEarlyDelay, 0, 300);
+        float finalLateDelay = Mathf.Clamp((rawReverbTime * 0.02f), 0, 100);
 
 
+        float difVolumeBonus = (finalReverbTime / 20000) * 20;
+        float finalDiffusion = Mathf.Clamp((fill.totalRoomJagness * 100) + difVolumeBonus, 0, 100);
 
-        /* EARLY DELAY */
-
-        for (int i = 0; i < 4; i++)
+        if (detect.distances[4] + detect.distances[5] > 10)
         {
-            if (detect.distances[i] > 0 && detect.distances[i] < minWallDist)
-            {
-                minWallDist = detect.distances[i];
 
-            }
-        }
-
-
-        float rawEarlyDelay = (minWallDist  / 343) * 1000;
-        float earlyDelay = Mathf.Clamp(rawEarlyDelay, 0, 300);
-        
-
-
-        /* LATE DELAY */
-
-        float rawLateDelay = ((mainRoomVolume * detect.reverbSizePar * 1000f) * 0.002f);
-
-        float minLateFmodTime = 0;
-        float maxLateFmodTime = 100;
-
-        float lateDelay = Mathf.Clamp(rawLateDelay, minLateFmodTime, maxLateFmodTime);
+            float heightBonus = (detect.distances[4] + detect.distances[5]) - 10f;
 
       
+            finalLateDelay += heightBonus * 1.5f;
 
-        /* DIFFUSION */
+            finalDiffusion += heightBonus * 1.0f;
+        }
 
-        float rawDiffusion = fill.totalRoomJagness * 100;
+        if (finalReverbTime > 2000f && minWallDist < 2.0f)
+        {
+            finalLateDelay += 30f;
+        }
 
-        float difVolumeBonus = (rawReverbTime / 20000) * 20;
+        finalLateDelay = Mathf.Clamp(finalLateDelay, 0, 100);
+        finalDiffusion = Mathf.Clamp(finalDiffusion, 0, 100);
 
-        float diffusion = rawDiffusion + difVolumeBonus;
-
-        diffusion = Mathf.Clamp(diffusion, 0, 100);
-
-         
-
-        /* DENSITY */
-
-        float sizePenalty = (rawReverbTime / 20000f) * 50f;
+        float sizePenalty = (finalReverbTime / 20000f) * 50f;
         float jagnessBonus = fill.totalRoomJagness * 40f;
+        float finalDensity = Mathf.Clamp(100f - sizePenalty + jagnessBonus, 0f, 100f);
 
-        float rawDensity = 100f - sizePenalty + jagnessBonus;
+        float finalHfDecay = Mathf.Clamp(10f + (fill.totalRoomHardness * 90f), 10f, 100f);
 
-        float density = Mathf.Clamp(rawDensity, 0f, 100f);
-
-
-
-
-        /* HF DECAY */
-
-        float rawHfDecayRatio = 10f + (fill.totalRoomHardness * 90f);
-
-        float hfDecayRatio = Mathf.Clamp(rawHfDecayRatio, 10f, 100f);
-
-        /* HF REFERENCE */
-
-
-   
-
-        float hfReference = fill.totalRoomHardness;
-
-        /* HIGH CUT */
 
         float materialHighCut = 2000f + (fill.totalRoomHardness * 18000f);
-        float airAbsorption = 1f - (rawReverbTime / 20000f * 0.8f);
-        float rawHighCut = materialHighCut * airAbsorption;
+        float airAbsorption = 1f - (finalReverbTime / 20000f * 0.8f);
+        float finalHighCut = Mathf.Clamp(materialHighCut * airAbsorption, 20f, 20000f);
+        float finalLowFreq = Mathf.Clamp(250f - (finalReverbTime / 20000f * 100f), 20f, 1000f);
 
-        float minHighCutFmod = 20f;
-        float maxHighCutFmod = 20000f;
+        float baseLowGain = Mathf.Lerp(-36f, 12f, fill.totalRoomHardness);
 
-        float highCut = Mathf.Clamp(rawHighCut, minHighCutFmod, maxHighCutFmod);
+        float boundaryBonus = 0f;
+        if (minWallDist < 1.5f)
+        {
+           
+            boundaryBonus = Mathf.Lerp(16f, 0f, minWallDist);
+        }
 
+        float finalLowGain = baseLowGain + boundaryBonus;
 
-       
-
-
-        /* LOW FREQ */
-
-        float rawLowFreq = 250f - (rawReverbTime / 20000f * 100f);
-
-        float minLowFreqFmod = 20f;
-        float maxLowFreqFmod = 1000f;
-
-        float lowFreq = Mathf.Clamp(rawLowFreq, minLowFreqFmod, maxLowFreqFmod);
-
-       
-
-        /* LOW GAIN */
-
-        float rawLowGain = (fill.totalRoomHardness * 24f) - 24f;
-
-        float minLowGainFmod = -80f;
-        float maxLowGainFmod = 0f;
-
-        float lowGain = (rawLowGain - minLowGainFmod) / (maxLowGainFmod - minLowGainFmod);
-        lowGain = Mathf.Clamp(lowGain, 0f, 1f);
-
-        /* EARLY LATE MIX */
-
-        float delayMix = reverbTime * detect.reverbSizePar;
-
-        /* REVERB ON OF */
-
+        float finalDelayMixNormalized = 0f;
+        float finalFeedback = detect.dFeedBack;
         int onOF = 1;
 
-        if (detect.distances[4] > 0)
+        float finalOutdoorReverbTime = 0f;
+        float finalDHighCut = 20000f;
+        float finalDReverbMixNormalized = 0f; 
+
+  
+        if (!isIndoors)
         {
-            onOF = 1;
-            reverbTimeText.text = $"Reverb Time is: {reverbTime} {rawReverbTime} Early Delay is: {earlyDelay} {rawEarlyDelay} LateDelay is: {lateDelay} Diffusion: {diffusion}";
-            roomModeText.text = $"HF Decay: {hfDecayRatio} HF Reference {hfReference} HighCut: {highCut}";
-            roomDataText.text = $"TotalRoomVolume: {mainRoomVolume} Avarage Room Hardness: {fill.totalRoomHardness} Avarage Room jagness: {fill.totalRoomJagness} Raw High Cut: {rawHighCut} {highCut}";
+      
+            CalculateOutdoorEcho();
+
+       
+            finalReverbTime = outdoorReverbTimeCalc;
+            finalOutdoorReverbTime = outdoorReverbTimeCalc;
+
+            finalEarlyDelay = dLateDelayCalc; 
+            finalLateDelay = 0f;
+
+            finalDiffusion = dDiffusionCalc;
+            finalDensity = 100f;
+
+            finalHighCut = dHighCutCalc;
+            finalDHighCut = dHighCutCalc;
+
+            finalDelayMixNormalized = outMixCalc;
+            finalFeedback = dFeedbackCalc;
+
+            finalDReverbMixNormalized = dReverbMixCalc;
+
+            
+            onOF = 0;
+
+           
+            if (finalDelayMixNormalized <= 0.01f) onOF = 0; 
+
+            if (reverbTimeText != null)
+                reverbTimeText.text = $"OUTDOOR | Echo: {finalEarlyDelay:F0}ms | MixNorm: {outMixCalc:F2} | RevMix: {finalDReverbMixNormalized}";
         }
         else
         {
-            onOF = 0;
-            reverbTimeText.text = $"Early Delay: {detect.dEarlyDelay} Late Delay: {detect.dLateDelay} FeedBack is: {detect.dFeedBack}";
+            if (reverbTimeText != null)
+             
+            reverbTimeText.text = $"Reverb Time is: {finalReverbTime}  Early Delay is: {finalEarlyDelay} LateDelay is: {finalLateDelay} Diffusion: {finalDiffusion}";
+            roomModeText.text = $"HF Decay: {finalHfDecay} HF Reference {fill.totalRoomHardness} HighCut: {finalHighCut}";
+            roomDataText.text = $"TotalRoomVolume: {mainRoomVolume} Avarage Room Hardness: {fill.totalRoomHardness} Avarage Room jagness: {fill.totalRoomJagness}";
         }
 
 
-        UpdateReverb(reverbTime, earlyDelay, lateDelay, onOF, diffusion, density, hfDecayRatio, hfReference, highCut, delayMix, detect.dEarlyDelay, detect.dLateDelay, detect.dFeedBack,lowFreq,lowGain);
+        float finalDelayMixDB = Mathf.Lerp(-80f, 10f, finalDelayMixNormalized);
 
+        float finalDReverbMixDB = Mathf.Lerp(-80f, 0f, finalDReverbMixNormalized);
 
+        UpdateReverb(
+            finalReverbTime,
+            finalEarlyDelay,
+            finalLateDelay,
+            onOF,
+            finalDiffusion,
+            finalDensity,
+            finalHfDecay,
+            finalHighCut,
+            finalDelayMixDB,
+            dLateDelayCalc,
+            finalLowFreq,
+            finalLowGain,
+            finalOutdoorReverbTime,
+            finalDHighCut,
+            finalFeedback,
+            finalDReverbMixDB
+        );
     }
 
+    void CalculateOutdoorEcho()
+    {
+        float closestDist = maxProbeDistance;
+        int closestIndex = -1;
 
-    public void UpdateReverb(float reverbTime, float earlyDelay, float lateDelay,int onOF, float diffusion, float density, float hfDecayRatio, float hfReference, float highCut,float delayMix, float dEarlyDelay, float dLateDelay, float dDiffusion, float lowFreq, float lowGain)
+        
+        for (int i = 0; i < 4; i++)
+        {
+            if (detect.distances[i] > 0 && detect.distances[i] < closestDist)
+            {
+                closestDist = detect.distances[i];
+                closestIndex = i;
+            }
+        }
+
+    
+        if (closestIndex == -1)
+        {
+            dLateDelayCalc = 0; dFeedbackCalc = 0; dDiffusionCalc = 0;
+            dHighCutCalc = 20000; outMixCalc = 0; outdoorReverbTimeCalc = 0;
+            dReverbMixCalc = 0;
+            return;
+        }
+
+
+        Vector3 hitPoint = detect.wallOrigins[closestIndex];
+        Vector3 wallNormal = detect.wallNormals[closestIndex];
+        Vector3 probeOrigin = hitPoint + (wallNormal * 2.0f);
+
+
+
+     
+        Vector3 rainOrigin = probeOrigin + (Vector3.up * 15f); 
+
+        
+        UnityEngine.Debug.DrawLine(hitPoint, probeOrigin, Color.yellow); 
+        UnityEngine.Debug.DrawLine(rainOrigin, probeOrigin, Color.cyan); 
+
+        bool isStructure = false;
+        float structureVolume = 0f;
+        RaycastHit roofHit;
+
+      
+        if (Physics.Raycast(rainOrigin, Vector3.down, out roofHit, 15f, detect.WallLayer))
+        {
+          
+
+            if (roofHit.point.y > probeOrigin.y + 0.5f) 
+            {
+                isStructure = true;
+
+                
+                float sizeX = GetRayDist(probeOrigin, Vector3.right) + GetRayDist(probeOrigin, Vector3.left);
+                float sizeZ = GetRayDist(probeOrigin, Vector3.forward) + GetRayDist(probeOrigin, Vector3.back);
+
+            
+                float floorDist = GetRayDist(probeOrigin, Vector3.down);
+                float totalHeight = (roofHit.point.y - probeOrigin.y) + floorDist;
+
+                structureVolume = sizeX * sizeZ * totalHeight;
+            }
+        }
+
+        dLateDelayCalc = (closestDist / 343f) * 1000f; 
+
+        if (isStructure)
+        {
+          
+            dReverbMixCalc = 1.0f; 
+            outdoorReverbTimeCalc = Mathf.Clamp(0.4f + (structureVolume * 0.005f), 0.4f, 1.2f);
+            dHighCutCalc = Mathf.Clamp(20000f - (structureVolume * 15f), 1000f, 20000f);
+            dDiffusionCalc = Mathf.Clamp(60f + (structureVolume * 0.5f), 60f, 100f);
+            dFeedbackCalc = Mathf.Clamp(30f + (structureVolume * 0.1f), 30f, 80f);
+            outMixCalc = 0.85f;
+        }
+        else
+        {
+           
+            dReverbMixCalc = 0.0f;
+            outdoorReverbTimeCalc = 0f;
+            dHighCutCalc = 20000f;
+            dDiffusionCalc = 0f;
+            dFeedbackCalc = 15f;
+            outMixCalc = 0.6f;
+        }
+    }
+
+    float GetRayDist(Vector3 origin, Vector3 dir)
+    {
+        if (Physics.Raycast(origin, dir, out RaycastHit hit, 20f, detect.WallLayer)) return hit.distance;
+        return 20f;
+    }
+
+    public void UpdateReverb(float reverbTime, float earlyDelay, float lateDelay, int onOF, float diffusion, float density, float hfDecayRatio,
+         float highCut, float delayMix,float dLateDelay, float lowFreq, float lowGain, float outdoorReverbTime, float dHighCut, float dFeedback, float dReverbMix)
     {
         RuntimeManager.StudioSystem.setParameterByID(reverbTimeID, reverbTime);
         RuntimeManager.StudioSystem.setParameterByID(earlyDelayID, earlyDelay);
@@ -239,15 +333,26 @@ public class ReverbManager : MonoBehaviour
         RuntimeManager.StudioSystem.setParameterByID(diffusionID, diffusion);
         RuntimeManager.StudioSystem.setParameterByID(densityID, density);
 
-        RuntimeManager.StudioSystem.setParameterByID(hfDecayID, hfDecayRatio);  
-        RuntimeManager.StudioSystem.setParameterByID(hfRefID, hfReference);
+        RuntimeManager.StudioSystem.setParameterByID(hfDecayID, hfDecayRatio);
+      
         RuntimeManager.StudioSystem.setParameterByID(highCutID, highCut);
         RuntimeManager.StudioSystem.setParameterByID(lowFreqID, lowFreq);
         RuntimeManager.StudioSystem.setParameterByID(lowGainID, lowGain);
 
-        RuntimeManager.StudioSystem.setParameterByID(dEarlyID, dEarlyDelay);
+ 
         RuntimeManager.StudioSystem.setParameterByID(dLateID, dLateDelay);
-        RuntimeManager.StudioSystem.setParameterByID(dDiffID, dDiffusion);
+  
+
+        RuntimeManager.StudioSystem.setParameterByID(outdoorReverbTimeID, outdoorReverbTime);
+        RuntimeManager.StudioSystem.setParameterByID(dHighCutID, dHighCut);
+        RuntimeManager.StudioSystem.setParameterByID(dFeedbackID, dFeedback);
+
+        
+        RuntimeManager.StudioSystem.setParameterByID(dReverbMixID, dReverbMix);
+
+        RuntimeManager.StudioSystem.setParameterByID(delayMixID, delayMix);
+
+     
+
     }
-    
 }

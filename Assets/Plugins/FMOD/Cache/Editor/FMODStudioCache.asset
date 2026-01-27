@@ -27,30 +27,6 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 651
---- !u!114 &-8176496069664824784
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/hfReference
-  m_EditorClassIdentifier: 
-  Name: hfReference
-  StudioPath: parameter:/hfReference
-  Min: 0
-  Max: 1
-  Default: 0
-  ID:
-    data1: 3361993979
-    data2: 239182747
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
 --- !u!114 &-8127482570130738436
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,9 +65,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: dLateDelay
   StudioPath: parameter:/dLateDelay
-  Min: 0
-  Max: 500
-  Default: 0
+  Min: 1
+  Max: 5000
+  Default: 10.998
   ID:
     data1: 968010199
     data2: 593595765
@@ -165,10 +141,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639050338490847805
+  lastModified: 639051233876697096
   FileSizes:
   - Name: Desktop
-    Value: 179936
+    Value: 183936
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -242,30 +218,6 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
---- !u!114 &-2957846298535266187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/dDiffusion
-  m_EditorClassIdentifier: 
-  Name: dDiffusion
-  StudioPath: parameter:/dDiffusion
-  Min: 0
-  Max: 1
-  Default: 0
-  ID:
-    data1: 616706802
-    data2: 2024793273
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
 --- !u!114 &-2873935296831473075
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -293,6 +245,30 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 558
+--- !u!114 &-2157548165149385607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dReverbMix
+  m_EditorClassIdentifier: 
+  Name: dReverbMix
+  StudioPath: parameter:/dReverbMix
+  Min: -80
+  Max: 10
+  Default: -80
+  ID:
+    data1: 2754948946
+    data2: 2168888897
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &-745391855228461207
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,18 +326,20 @@ MonoBehaviour:
   - {fileID: -8127482570130738436}
   - {fileID: -5156096667222458465}
   - {fileID: 6214065512174954345}
-  - {fileID: -8176496069664824784}
-  - {fileID: -2957846298535266187}
   - {fileID: -7677686626742110297}
-  - {fileID: 5671683036403871263}
   - {fileID: 6255069424385099918}
   - {fileID: 8998729869032577098}
+  - {fileID: 7408349101332572715}
+  - {fileID: 8439011966351320703}
+  - {fileID: 3493219100641043508}
+  - {fileID: 365925564699357963}
+  - {fileID: -2157548165149385607}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639050338490883599
+  cacheTime: 639051233876758007
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -373,6 +351,30 @@ MonoBehaviour:
     index: 3
   - key: event:/FootStepsRun
     index: 4
+--- !u!114 &365925564699357963
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/delayMix
+  m_EditorClassIdentifier: 
+  Name: delayMix
+  StudioPath: parameter:/delayMix
+  Min: -80
+  Max: 10
+  Default: -80
+  ID:
+    data1: 109246141
+    data2: 1171354678
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &978090399546252162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -448,7 +450,7 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
---- !u!114 &5671683036403871263
+--- !u!114 &3493219100641043508
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -458,16 +460,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/dEarlyDelay
+  m_Name: parameter:/outdoorReverbTime
   m_EditorClassIdentifier: 
-  Name: dEarlyDelay
-  StudioPath: parameter:/dearlyDelay
-  Min: 0
-  Max: 5000
-  Default: 0
+  Name: outdoorReverbTime
+  StudioPath: parameter:/outdoorReverbTime
+  Min: 100
+  Max: 20000
+  Default: 498
   ID:
-    data1: 1935533868
-    data2: 4155040070
+    data1: 972986439
+    data2: 3661194740
   Type: 0
   IsGlobal: 1
   Labels: []
@@ -487,10 +489,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639050338490883599
+  lastModified: 639051233876758007
   FileSizes:
   - Name: Desktop
-    Value: 1618
+    Value: 1698
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:
@@ -530,12 +532,60 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: lowGain
   StudioPath: parameter:/lowGain
-  Min: 0
-  Max: 1
-  Default: 0
+  Min: -36
+  Max: 12
+  Default: -36
   ID:
     data1: 3843767230
     data2: 723627540
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &7408349101332572715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dFeedback
+  m_EditorClassIdentifier: 
+  Name: dFeedback
+  StudioPath: parameter:/dFeedback
+  Min: 0
+  Max: 100
+  Default: 0
+  ID:
+    data1: 1575160212
+    data2: 48487145
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &8439011966351320703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/dHighCut
+  m_EditorClassIdentifier: 
+  Name: dHighCut
+  StudioPath: parameter:/dHighCut
+  Min: 20
+  Max: 22000
+  Default: 22000
+  ID:
+    data1: 1063081811
+    data2: 4261208264
   Type: 0
   IsGlobal: 1
   Labels: []
