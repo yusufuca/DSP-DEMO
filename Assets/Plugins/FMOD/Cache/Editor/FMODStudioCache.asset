@@ -141,10 +141,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639051452255945503
+  lastModified: 639052012127617056
   FileSizes:
   - Name: Desktop
-    Value: 1114400
+    Value: 1114464
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -166,54 +166,6 @@ MonoBehaviour:
   ID:
     data1: 2530915802
     data2: 3714400277
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
---- !u!114 &-5075015430857453050
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/OccVol
-  m_EditorClassIdentifier: 
-  Name: OccVol
-  StudioPath: parameter:/OccVol
-  Min: -80
-  Max: 10
-  Default: 0
-  ID:
-    data1: 1564243121
-    data2: 3464036158
-  Type: 0
-  IsGlobal: 1
-  Labels: []
-  Exists: 1
---- !u!114 &-4880056564780587955
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
-  m_Name: parameter:/OccEQ
-  m_EditorClassIdentifier: 
-  Name: OccEQ
-  StudioPath: parameter:/OccEQ
-  Min: 10
-  Max: 22000
-  Default: 22000
-  ID:
-    data1: 3597909786
-    data2: 3295044667
   Type: 0
   IsGlobal: 1
   Labels: []
@@ -367,7 +319,9 @@ MonoBehaviour:
   IsStream: 1
   Is3D: 0
   IsOneShot: 1
-  Parameters: []
+  Parameters:
+  - {fileID: 2543574895382346617}
+  - {fileID: 3061655107873365548}
   MinDistance: 4.8
   MaxDistance: 8
   Length: 16056
@@ -410,14 +364,12 @@ MonoBehaviour:
   - {fileID: 3493219100641043508}
   - {fileID: 365925564699357963}
   - {fileID: -2157548165149385607}
-  - {fileID: -4880056564780587955}
-  - {fileID: -5075015430857453050}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639051452255985639
+  cacheTime: 639052012127641642
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -482,6 +434,30 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 250
+--- !u!114 &2543574895382346617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/MusicLoops/OccEQ
+  m_EditorClassIdentifier: 
+  Name: OccEQ
+  StudioPath: 
+  Min: 10
+  Max: 22000
+  Default: 22000
+  ID:
+    data1: 3597909786
+    data2: 3295044667
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &2583587561185576945
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -530,6 +506,30 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
+--- !u!114 &3061655107873365548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/MusicLoops/OccVol
+  m_EditorClassIdentifier: 
+  Name: OccVol
+  StudioPath: 
+  Min: -80
+  Max: 10
+  Default: 0
+  ID:
+    data1: 1564243121
+    data2: 3464036158
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &3493219100641043508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -569,7 +569,7 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639051452255985639
+  lastModified: 639052012127641642
   FileSizes:
   - Name: Desktop
     Value: 1944

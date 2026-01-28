@@ -4,24 +4,39 @@ using UnityEngine;
 using FMODUnity;
 using FMOD.Studio;
 
-public class GlobalOcclusionManager : MonoBehaviour
+[RequireComponent(typeof(StudioEventEmitter))]
+public class SelfOcclusion : MonoBehaviour
 {
-    [Header("Settings")]
+    [Header("Target Settings")]
     public Transform playerTransform;
-    public Transform soundSource;
     public LayerMask obstructionLayer;
-    public float occlusionSpeed = 10f;
+
+    [Header("Raycast Settings")]
+    public Vector3 rayOffset = new Vector3(0, 1.5f, 0);
+
+    [Header("Audio Physics")]
+    public float occlusionSpeed = 5f;
     public float maxDistance = 50f;
 
-    private FMOD.Studio.PARAMETER_ID occVolParamID, occEQParamID;
+    [Header("Spatializer Settings")]
+    public float frontFreq = 22000f; 
+    public float backFreq = 10000f;  
+    [Range(0f, 1f)] public float minPanStrength = 0.3f; 
+    [Range(0f, 1f)] public float maxPanStrength = 1.0f; 
 
+
+
+    
+    private StudioEventEmitter emitter;
+    private DetectingWall detect;
+
+    private float currentFreq = 22000f;
+    private float currentVol = 0f;
+    private float currentPan = 0f;
 
     private float targetFreq = 22000f;
-    private float targetVol = 0f;      
-
-
-
-    private DetectingWall detect;
+    private float targetVol = 0f;
+    private float targetPan = 0f;
 
     private void Start()
     {
@@ -32,36 +47,32 @@ public class GlobalOcclusionManager : MonoBehaviour
             playerTransform = Camera.main.transform;
         }
 
-      
-        GetParamID("OccEQ", out occEQParamID);
-        GetParamID("OccVol", out occVolParamID);
-    }
-    void GetParamID(string name, out FMOD.Studio.PARAMETER_ID id)
-    {
-        FMOD.Studio.PARAMETER_DESCRIPTION desc;
-        RuntimeManager.StudioSystem.getParameterDescriptionByName(name, out desc);
-        id = desc.id;
+        emitter = GetComponent<StudioEventEmitter>();
     }
 
     private void Update()
     {
-        if (playerTransform == null || detect == null || soundSource == null) return;
+        if (emitter == null || !emitter.IsPlaying()) return;
+        if (playerTransform == null) return;
 
-        CalculateRawOcclusionData();
-     
+        CalculatePhysics();
+        UpdateLocalFMOD();
     }
 
-    void CalculateRawOcclusionData()
+    void CalculatePhysics()
     {
-       
-        Vector3 sourcePos = soundSource.position;
+        Vector3 sourcePos = transform.position + rayOffset;
         Vector3 playerPos = playerTransform.position;
+        Vector3 toSource = sourcePos - playerPos;
+        float distance = toSource.magnitude;
+        Vector3 dirNormalized = toSource.normalized;
 
-        float distance = Vector3.Distance(sourcePos, playerPos);
+       
         float distanceFactor = Mathf.Clamp01(1f - (distance / maxDistance));
         distanceFactor = Mathf.Max(distanceFactor, 0.1f);
-        float wallFactor = 1f;
 
+        // WallFactor
+        float wallFactor = 1f;
         RaycastHit hit;
 
         if (Physics.Linecast(sourcePos, playerPos, out hit, obstructionLayer))
@@ -69,47 +80,79 @@ public class GlobalOcclusionManager : MonoBehaviour
             string tag = hit.collider.tag;
             float hardness = 0.5f;
 
-            if (detect.GetMaterialInfo(tag, out MaterialDatabase.MaterialData data))
+            if (detect != null && detect.GetMaterialInfo(tag, out MaterialDatabase.MaterialData data))
             {
                 hardness = data.hardness;
             }
             wallFactor = 1f - (hardness * 0.8f);
-
-            
-
-
             Debug.DrawLine(sourcePos, hit.point, Color.red);
         }
         else
         {
-            targetFreq = 22000f;
-            targetVol = 0f;
-
             Debug.DrawLine(sourcePos, playerPos, Color.green);
         }
+
         float finalTransmission = distanceFactor * wallFactor;
-        targetFreq = Mathf.Lerp(600f, 22000f, finalTransmission);
-        targetVol = Mathf.Lerp(-20f, 0f, finalTransmission);
 
-        UpdateFMODGlobal(targetFreq,targetVol);
+       
+        float occlusionFreq = Mathf.Lerp(10f, 22000f, finalTransmission);
+
+        // Vol Calc
+        targetVol = Mathf.Lerp(-30f, 0f, finalTransmission);
+
+
+      //Direction Freq
+
+        float forwardDot = Vector3.Dot(playerTransform.forward, dirNormalized);
+
+        float directionFreq = 22000f;
+        if (forwardDot < 0)
+        {
+            
+            float fatness = Mathf.Abs(forwardDot); // 0..1
+            directionFreq = Mathf.Lerp(frontFreq, backFreq, fatness);
+        }
+
+
+        
+        targetFreq = Mathf.Min(occlusionFreq, directionFreq);
+
+
+      
+        float rawPan = Vector3.Dot(playerTransform.right, dirNormalized);
+
+        float currentDistFactor = Mathf.Clamp01(distance / maxDistance);
+        float dynamicPanStrength = Mathf.Lerp(minPanStrength, maxPanStrength, currentDistFactor);
+
+        targetPan = rawPan * dynamicPanStrength;
     }
 
-    void UpdateFMODGlobal(float freq, float vol)
+    void UpdateLocalFMOD()
     {
+       
+        currentFreq = Mathf.Lerp(currentFreq, targetFreq, Time.deltaTime * occlusionSpeed);
+        currentVol = Mathf.Lerp(currentVol, targetVol, Time.deltaTime * occlusionSpeed);
+        currentPan = Mathf.Lerp(currentPan, targetPan, Time.deltaTime * occlusionSpeed);
 
-
-     
-        FMOD.RESULT resultEQ = RuntimeManager.StudioSystem.setParameterByID(occEQParamID, freq);
-        FMOD.RESULT resultVol = RuntimeManager.StudioSystem.setParameterByID(occVolParamID, vol);
-
-        if (resultEQ != FMOD.RESULT.OK)
+        if (emitter.EventInstance.isValid())
         {
-            Debug.LogError($"EQ Par {resultEQ}");
-        }
+            
+            emitter.EventInstance.setParameterByName("OccEQ", currentFreq);
+            emitter.EventInstance.setParameterByName("OccVol", currentVol);
 
-        if (resultVol != FMOD.RESULT.OK)
-        {
-            Debug.LogError($"Vol Para {resultVol}");
+            
+            emitter.EventInstance.setParameterByName("rawPan", currentPan);
         }
     }
+
+
+
+
+
+
+    public float GetCurrentFreq() { return currentFreq; }
+    public float GetCurrentVol() { return currentVol; }
+    public float GetCurrentPan() { return currentPan; }
+    public float GetTargetFreq() { return targetFreq; }
+
 }
