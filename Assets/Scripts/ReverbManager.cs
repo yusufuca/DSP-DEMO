@@ -435,8 +435,11 @@ public class ReverbManager : MonoBehaviour
         RuntimeManager.StudioSystem.getParameterDescriptionByName(name, out desc);
         id = desc.id;
     }
-        
-  
 
-  
+    public RoomManager.RoomData GetPlayerRoom()
+    {
+        return currentRoomData;
+    }
+
+
 }
