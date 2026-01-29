@@ -7,9 +7,6 @@
 		<relationship name="automators">
 			<destination>{16fce92d-21d9-46dc-84c1-6977b671340b}</destination>
 		</relationship>
-		<relationship name="modulators">
-			<destination>{c35edaac-1bc0-4445-ad74-b3dce0fd43d6}</destination>
-		</relationship>
 		<relationship name="effectChain">
 			<destination>{ace9f652-5f47-449e-8a19-1d0ca8425445}</destination>
 		</relationship>
@@ -27,17 +24,6 @@
 		<relationship name="automationCurves">
 			<destination>{84f90fd4-2764-4293-a36a-86a0e2d808d0}</destination>
 		</relationship>
-	</object>
-	<object class="SeekModulator" id="{c35edaac-1bc0-4445-ad74-b3dce0fd43d6}">
-		<property name="nameOfPropertyBeingModulated">
-			<value>volume</value>
-		</property>
-		<property name="speedAscending">
-			<value>3.2000000476837158</value>
-		</property>
-		<property name="asymmetric">
-			<value>true</value>
-		</property>
 	</object>
 	<object class="MixerBusEffectChain" id="{ace9f652-5f47-449e-8a19-1d0ca8425445}">
 		<relationship name="effects">

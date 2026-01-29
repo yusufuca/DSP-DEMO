@@ -8,7 +8,23 @@ public class SpeakerController : AudioSourceBase
     public float minPanStrength = 0.5f;
     public float maxPanStrength = 1.0f;
 
-    
+    protected override void Start()
+    {
+ 
+        base.Start();
+
+        
+        if (currentProfile != null && currentProfile.isStatic)
+        {
+            StartCoroutine(DelayedRoomScan());
+        }
+    }
+    System.Collections.IEnumerator DelayedRoomScan()
+    {
+        // 0.5 saniye bekle, sistem otursun
+        yield return new WaitForSeconds(0.5f);
+        OnRoomEnter();
+    }
     protected override void CalculatePhysics()
     {
        
@@ -88,5 +104,26 @@ public class SpeakerController : AudioSourceBase
         float dynamicStrength = Mathf.Lerp(minPanStrength, maxPanStrength, currentDistFactor);
 
         targetPan = rawPan * dynamicStrength;
+    }
+    public override void OnRoomEnter()
+    {
+        FloodFill myScanner = GetComponent<FloodFill>();
+
+        if (myScanner != null)
+        {
+            Debug.Log($"[Speaker] {name} tarama başlatıyor...");
+            // Odayı tara ve Manager'a kaydettir
+            myScanner.GetOrCalculateRoom((room) =>
+            {
+
+               
+                Debug.Log($"[Speaker] Radyo odayı tanımladı: {room.roomID}");
+           
+            });
+        }
+        else
+        {
+            Debug.LogError("Speaker static ama üzerinde FloodFill scripti yok!");
+        }
     }
 }

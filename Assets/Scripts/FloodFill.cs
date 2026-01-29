@@ -4,152 +4,63 @@ using UnityEngine;
 
 public class FloodFill : MonoBehaviour
 {
-    public static FloodFill FillInstance { get; private set; }
-    private void Awake()
-    {
-
-        if (FillInstance != null && FillInstance != this)
-        {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            FillInstance = this;
-        }
-    }
+    [Header("Settings")]
+    public bool debugDraw = false;
+    public bool IsScanning { get; private set; } = false;
 
     private DetectingWall detect;
+    private Collider[] resultsBuffer = new Collider[10];
 
-    [Header("Optimization Settings")]
-    private bool isInRoom = false;
-    private bool isDirty = true;
-
-
-
-    public float scanInterval = 1f;
-    private float scanTimer = 0f;
-
-    public  float totalRoomVolume = 0f;
-    public  float totalRoomHardness = 0f;
-    public  float totalRoomJagness = 0f;
-
-    public Queue<Vector3> wallQueue = new Queue<Vector3>();
-
-    public HashSet<Vector3> visited = new HashSet<Vector3>();
-
-
- 
-
-    Collider[] resultsBuffer = new Collider[10];
-
-    private void Start()
+    private void Awake()
     {
         detect = DetectingWall.DetectInstance;
-
-        scanTimer = scanInterval;
-
     }
 
-
-
-
-    void Update()
+    public void GetOrCalculateRoom(System.Action<RoomManager.RoomData> onComplete)
     {
-        scanTimer += Time.deltaTime;
+        if (IsScanning) return;
 
-       
-            
-            if (detect.distances[4] > 0)
-            {
-                if (detect.hasGridAnchor)
-                {
-                    if (!isInRoom || isDirty)
-                    {
-                    
-                        Fill();
-                        
-                        if (totalRoomVolume > 0.1f)
-                        {
-                            if (scanTimer >= scanInterval)
-                            {
-                            isInRoom = true;
-                            isDirty = false;
-                            }
-                        }
-                    }
-                   
+      
+        if (RoomManager.Instance != null && RoomManager.Instance.TryGetRoomAt(transform.position, out RoomManager.RoomData existingRoom))
+        {
+            if (debugDraw) Debug.Log($"[FloodFill] Cache'den geldi: {existingRoom.roomID}");
+            onComplete?.Invoke(existingRoom);
+            return;
+        }
 
-                }
-                
-            }
-            else
-            {
-                
-                if (isInRoom)
-                {
-                    isInRoom = false;
-                   
-                }
-                scanTimer = 0f;
-            }
-            
-    }
-    
-
-
-
-    public void ForceRefresh()
-    {
-        isDirty = true;
+        ScanRoutine(transform.position, onComplete);
     }
 
-    Vector3 SnapToGrid()
+    public void ScanRoutine(Vector3 startPos, System.Action<RoomManager.RoomData> onComplete)
     {
-        float nodeSize = detect.nodeSize;
-        Vector3 rawPoisition = transform.position;
-        Vector3 anchor = detect.hasGridAnchor ? detect.gridAnchorPoint : rawPoisition;
-        float x = Mathf.Round((rawPoisition.x - anchor.x) / nodeSize) * nodeSize + anchor.x;
-        float z = Mathf.Round((rawPoisition.z - anchor.z) / nodeSize) * nodeSize + anchor.z;
-
-        float y = rawPoisition.y;
-
-        return new Vector3(x, y, z);
-
-    }
-    bool IsWall(Vector3 position)
-    {
-        float nodeSize = detect.nodeSize;
-        float halfSizeRef = (nodeSize / 2f) * 0.85f;
-        Vector3 halfsize = new Vector3(halfSizeRef, halfSizeRef, halfSizeRef);
-
-        return Physics.CheckBox(position, halfsize, Quaternion.identity, detect.WallLayer);
-    }
-
-    private void Fill()
-    {
-        wallQueue.Clear();
-        visited.Clear();
-
+        IsScanning = true;
+        if (detect == null) detect = DetectingWall.DetectInstance;
 
         float nodeSize = detect.nodeSize;
+        float debugDuration = 10.0f;     
+
+
+        Queue<Vector3> wallQueue = new Queue<Vector3>();
+        HashSet<Vector3> visited = new HashSet<Vector3>();
+        HashSet<Vector3Int> occupiedGridCells = new HashSet<Vector3Int>();
+
         float accumulatedHardness = 0f;
         float accumulatedJagness = 0f;
         int totalWallsTouched = 0;
-
-
-
-        Vector3 rawStart = SnapToGrid();
+        float calculatedTotalVolume = 0f; 
+        Vector3 rawStart = SnapToGrid(startPos, nodeSize);
         Vector3 safeStart = rawStart;
         bool foundSafeSpot = true;
 
-
+     
         if (IsWall(rawStart))
         {
             foundSafeSpot = false;
+        
             Vector3[] emergencyDirs = { Vector3.back, Vector3.forward, Vector3.left, Vector3.right };
             foreach (Vector3 dir in emergencyDirs)
             {
-                Vector3 neighbor = rawStart + (dir * (nodeSize * 0.25f));
+                Vector3 neighbor = rawStart + (dir * nodeSize);
                 if (!IsWall(neighbor))
                 {
                     safeStart = neighbor;
@@ -157,21 +68,74 @@ public class FloodFill : MonoBehaviour
                     break;
                 }
             }
-
         }
-        if (!foundSafeSpot) return;
+
+        if (!foundSafeSpot)
+        {
+            Debug.LogWarning("FloodFill: Duvar içinde kaldı, yer bulunamadı.");
+            IsScanning = false;
+            return;
+        }
+
+
+        Vector3 minPoint = safeStart;
+        Vector3 maxPoint = safeStart;
 
         wallQueue.Enqueue(safeStart);
         visited.Add(safeStart);
 
-        int volumeCounter = 0;
-        float debugSize = (nodeSize / 2f) * 0.9f;
-        while (wallQueue.Count > 0 && volumeCounter < 10000)
+        int safetyCounter = 0;
+
+        while (wallQueue.Count > 0 && safetyCounter < 10000)
         {
             Vector3 currentPos = wallQueue.Dequeue();
-            volumeCounter++;
+ 
+            Vector3 currentWorldPos = SnapToGrid(currentPos, nodeSize);
+            safetyCounter++;
 
-            DrawDebugBox(currentPos, new Vector3(debugSize, debugSize, debugSize), Quaternion.identity, Color.yellow);
+
+            float ceilingDist = 0f;
+            float floorDist = 0f;
+
+ 
+            if (Physics.Raycast(currentPos, Vector3.up, out RaycastHit hitUp, 20f, detect.WallLayer))
+                ceilingDist = hitUp.distance;
+
+            if (Physics.Raycast(currentPos, Vector3.down, out RaycastHit hitDown, 20f, detect.WallLayer))
+                floorDist = hitDown.distance;
+
+      
+            float totalHeight = ceilingDist + floorDist;
+            if (totalHeight < 0.1f) totalHeight = nodeSize; 
+
+            calculatedTotalVolume += (nodeSize * nodeSize) * totalHeight;
+
+            Vector3 pointTop = currentPos + Vector3.up * ceilingDist;
+            Vector3 pointBottom = currentPos + Vector3.down * floorDist;
+
+            minPoint = Vector3.Min(minPoint, pointBottom); 
+            maxPoint = Vector3.Max(maxPoint, pointTop);
+
+       
+            
+                DrawDebugBox(currentWorldPos, Vector3.one * (nodeSize * 0.9f), Quaternion.identity, Color.yellow, debugDuration);
+
+    
+            if (RoomManager.Instance != null)
+            {
+             
+                Vector3Int baseGrid = RoomManager.Instance.WorldToGrid(currentPos);
+
+       
+                int gridMinY = Mathf.RoundToInt((currentPos.y - floorDist) / nodeSize);
+                int gridMaxY = Mathf.RoundToInt((currentPos.y + ceilingDist) / nodeSize);
+
+                for (int y = gridMinY; y <= gridMaxY; y++)
+                {
+                    Vector3Int columnCell = new Vector3Int(baseGrid.x, y, baseGrid.z);
+                    occupiedGridCells.Add(columnCell);
+                }
+            }
 
             Vector3[] neighbors = new Vector3[]
             {
@@ -187,118 +151,150 @@ public class FloodFill : MonoBehaviour
                 {
                     if (!IsWall(target))
                     {
+                      
                         visited.Add(target);
                         wallQueue.Enqueue(target);
                     }
                     else
                     {
-
-                        float h = 0f;
-                        float j = 0f;
-                        if (GetMaterialData(target, out h, out j))
+                    
+                        if (!visited.Contains(target))
                         {
-                            accumulatedHardness += h;
-                            accumulatedJagness += j;
-                            totalWallsTouched++;
+                            visited.Add(target);
+
+                            
+                                DrawDebugBox(SnapToGrid(target, nodeSize), Vector3.one * (nodeSize * 0.9f), Quaternion.identity, Color.red, debugDuration);
+
+                            if (GetMaterialData(target, out float h, out float j, nodeSize, debugDuration))
+                            {
+                                accumulatedHardness += h;
+                                accumulatedJagness += j;
+                                totalWallsTouched++;
+                            }
                         }
                     }
-
-
                 }
-
-
             }
-
-
-
         }
 
+      
+        RoomManager.RoomData newRoom = new RoomManager.RoomData();
 
-        float voxelVolume = nodeSize * nodeSize;
-        totalRoomVolume = volumeCounter * voxelVolume;
+    
+        newRoom.bounds = new Bounds();
+        newRoom.bounds.SetMinMax(minPoint, maxPoint);
+        newRoom.bounds.Expand(2f);
+
+        newRoom.centerPoint = newRoom.bounds.center;
+
+        if (RoomManager.Instance != null)
+        {
+            Vector3Int g = RoomManager.Instance.WorldToGrid(safeStart);
+            newRoom.roomID = $"Room_{g.x}_{g.y}_{g.z}";
+        }
+
+       
+        newRoom.volume = calculatedTotalVolume;
+        newRoom.occupiedCells = occupiedGridCells;
+
         if (totalWallsTouched > 0)
         {
-            totalRoomHardness = accumulatedHardness / totalWallsTouched;
-
-            totalRoomJagness = accumulatedJagness / totalWallsTouched;
+            newRoom.hardness = accumulatedHardness / totalWallsTouched;
+            newRoom.jagness = accumulatedJagness / totalWallsTouched;
         }
-        else
+
+       
+        if (RoomManager.Instance != null)
         {
-            totalRoomHardness = 0f;
-            totalRoomJagness = 0f;
+            RoomManager.Instance.RegisterRoom(newRoom);
         }
 
+        onComplete?.Invoke(newRoom);
+        IsScanning = false;
+    }
+    
 
+    Vector3 SnapToGrid(Vector3 pos, float size)
+    {
+        
 
+        float x = Mathf.Round(pos.x / size) * size;
+        float y = pos.y;
+        float z = Mathf.Round(pos.z / size) * size;
 
-
-
+        return new Vector3(x, y, z);
     }
 
-    bool GetMaterialData(Vector3 wallPosition, out float hardness, out float jagness)
+    bool IsWall(Vector3 position)
     {
-        hardness = 0f;
-        jagness = 0f;
+        float nodeSize = detect.nodeSize;
+        float halfSizeRef = (nodeSize / 2f) * 0.85f;
+        return Physics.CheckBox(position, new Vector3(halfSizeRef, halfSizeRef, halfSizeRef), Quaternion.identity, detect.WallLayer);
+    }
 
-        float halfSize = (detect.nodeSize / 2) * 0.95f;
-        Vector3 boxSize = new Vector3(halfSize, halfSize, halfSize);
-
-        int count = Physics.OverlapBoxNonAlloc(wallPosition, boxSize, resultsBuffer, Quaternion.identity, detect.WallLayer);
-        DrawDebugBox(wallPosition, boxSize, Quaternion.identity, Color.red);
-
-        float totalLocalHardness = 0f;
-        float totalLocalJagness = 0f;
-        int validMaterials = 0;
+    bool GetMaterialData(Vector3 wallPosition, out float hardness, out float jagness, float nodeSize, float debugDuration)
+    {
+        hardness = 0f; jagness = 0f;
+        float halfSize = (detect.nodeSize / 2) * 0.9f;
+        int count = Physics.OverlapBoxNonAlloc(wallPosition, new Vector3(halfSize, halfSize, halfSize), resultsBuffer, Quaternion.identity, detect.WallLayer);
+    
+        float totalH = 0f;
+        float totalJ = 0f;
+        int valid = 0;
 
         for (int i = 0; i < count; i++)
         {
+            if (resultsBuffer[i] == null) continue;
             string tag = resultsBuffer[i].tag;
-
             if (detect.GetMaterialInfo(tag, out MaterialDatabase.MaterialData data))
             {
-                totalLocalHardness += data.hardness;
-                totalLocalJagness += data.jagness;
-                validMaterials++;
+                totalH += data.hardness;
+                totalJ += data.jagness;
+                valid++;
             }
         }
-        if (validMaterials > 0)
+
+        if (valid > 0)
         {
-            hardness = totalLocalHardness / validMaterials;
-            jagness = totalLocalJagness / validMaterials;
+            hardness = totalH / valid;
+            jagness = totalJ / valid;
             return true;
         }
-        else
-        {
-            return false;
-        }
-
+        return false;
     }
 
-    void DrawDebugBox(Vector3 center, Vector3 halfExtents, Quaternion rotation, Color color)
+    void DrawDebugBox(Vector3 center, Vector3 size, Quaternion rotation, Color color, float duration = 0.1f)
     {
-
-        Vector3 size = halfExtents * 2f;
-
+    
+        Vector3 half = size * 0.5f;
 
         Vector3[] points = new Vector3[8];
-        points[0] = center + rotation * new Vector3(size.x, size.y, size.z) * 0.5f;
-        points[1] = center + rotation * new Vector3(-size.x, size.y, size.z) * 0.5f;
-        points[2] = center + rotation * new Vector3(-size.x, -size.y, size.z) * 0.5f;
-        points[3] = center + rotation * new Vector3(size.x, -size.y, size.z) * 0.5f;
-        points[4] = center + rotation * new Vector3(size.x, size.y, -size.z) * 0.5f;
-        points[5] = center + rotation * new Vector3(-size.x, size.y, -size.z) * 0.5f;
-        points[6] = center + rotation * new Vector3(-size.x, -size.y, -size.z) * 0.5f;
-        points[7] = center + rotation * new Vector3(size.x, -size.y, -size.z) * 0.5f;
+        points[0] = center + rotation * new Vector3(-half.x, -half.y, -half.z);
+        points[1] = center + rotation * new Vector3(half.x, -half.y, -half.z);
+        points[2] = center + rotation * new Vector3(half.x, -half.y, half.z);
+        points[3] = center + rotation * new Vector3(-half.x, -half.y, half.z);
+        points[4] = center + rotation * new Vector3(-half.x, half.y, -half.z);
+        points[5] = center + rotation * new Vector3(half.x, half.y, -half.z);
+        points[6] = center + rotation * new Vector3(half.x, half.y, half.z);
+        points[7] = center + rotation * new Vector3(-half.x, half.y, half.z);
 
+  
+        Debug.DrawLine(points[0], points[1], color, duration);
+        Debug.DrawLine(points[1], points[2], color, duration);
+        Debug.DrawLine(points[2], points[3], color, duration);
+        Debug.DrawLine(points[3], points[0], color, duration);
 
-        Debug.DrawLine(points[0], points[1], color); Debug.DrawLine(points[1], points[2], color);
-        Debug.DrawLine(points[2], points[3], color); Debug.DrawLine(points[3], points[0], color);
+        Debug.DrawLine(points[4], points[5], color, duration);
+        Debug.DrawLine(points[5], points[6], color, duration);
+        Debug.DrawLine(points[6], points[7], color, duration);
+        Debug.DrawLine(points[7], points[4], color, duration);
 
-        Debug.DrawLine(points[4], points[5], color); Debug.DrawLine(points[5], points[6], color);
-        Debug.DrawLine(points[6], points[7], color); Debug.DrawLine(points[7], points[4], color);
-
-        Debug.DrawLine(points[0], points[4], color); Debug.DrawLine(points[1], points[5], color);
-        Debug.DrawLine(points[2], points[6], color); Debug.DrawLine(points[3], points[7], color);
+    
+        Debug.DrawLine(points[0], points[4], color, duration);
+        Debug.DrawLine(points[1], points[5], color, duration);
+        Debug.DrawLine(points[2], points[6], color, duration);
+        Debug.DrawLine(points[3], points[7], color, duration);
     }
+
 
 }

@@ -47,9 +47,9 @@ public class SpeakerDebugger : MonoBehaviour
         float targetFreq = audioSource.GetTargetFreq();
         float vol = audioSource.GetCurrentVol();
         float pan = audioSource.GetCurrentPan();
-        float dist = audioSource.currentDistance; // Yeni
-        bool blocked = audioSource.isObstructed;  // Yeni
-        string winner = audioSource.frequencyWinner; // Yeni
+        float dist = audioSource.currentDistance;
+        bool blocked = audioSource.isObstructed; 
+        string winner = audioSource.frequencyWinner; 
         string tagInfo = audioSource.matchedTag;
 
 
@@ -58,23 +58,32 @@ public class SpeakerDebugger : MonoBehaviour
         else if (pan > 0.1f) panStr = "R";
 
         string blockStr = blocked ? "<color=red>BLOCKED</color>" : "<color=green>CLEAR</color>";
-        string winnerColor = "<color=white>"; // Varsayılan
+        string winnerColor = "<color=white>"; 
 
-        if (winner == "WALL") winnerColor = "<color=#FFAA00>"; // Turuncu
-        else if (winner == "ANGLE") winnerColor = "<color=#00FFFF>"; // Cyan
-        else if (winner == "DIST") winnerColor = "<color=#AAAAAA>"; // Gri (Distance)
+        if (winner == "WALL") winnerColor = "<color=#FFAA00>"; 
+        else if (winner == "ANGLE") winnerColor = "<color=#00FFFF>"; 
+        else if (winner == "DIST") winnerColor = "<color=#AAAAAA>"; 
+
+        string portalInfo = "NO PORTAL";
+        if (audioSource.portalFound)
+        {
+            string roomName = audioSource.roomThroughPortal != null ? audioSource.roomThroughPortal.roomID : "OUTDOOR";
+            portalInfo = $"<color=green>PORTAL -> {roomName}</color>";
+        }
 
         debugText.text = string.Format(
                     "<size=120%>{0}</size>\n" +                 
                     "DIST: <color=white>{1:0.0}m</color> | {2}\n" + 
                     "FREQ: {3}<b>{4}</b></color> <size=60%>(now:{5:0})</size>\n" + 
                     "VOL : <color=white>{6:0.0} dB</color>\n" +
+                    "{7}\n" +
                     "PAN : <color=green>{7:0.00}</color> ({8})",
 
                     tagInfo.ToUpper(),
                     dist, blockStr,
                     winnerColor, winner, currentFreq, 
                     vol,
+                    portalInfo,
                     pan, panStr
                 );
 

@@ -43,7 +43,10 @@ public class DetectingWall : MonoBehaviour
     public float maxDistance = 20f;
     public float nodeSize = 2f;
     public LayerMask WallLayer;
-    public float reverbSizePar = 0.025f;
+    public float reverbSizePar = 0.003f;
+
+    [Header("Target")]
+    public Transform playerTransform;
 
     [Header("Text")]
     public TextMeshProUGUI frontText;
@@ -127,6 +130,8 @@ public class DetectingWall : MonoBehaviour
     }
     private void Update()
     {
+     
+
         DetectWall();
         DelayParameters();
         
@@ -152,14 +157,16 @@ public class DetectingWall : MonoBehaviour
   
     void DetectWall()
     {
+        if (playerTransform == null) return;
+
         for (int i = 0; i < sensors.Length; i++)
         {
-            Vector3 origin = transform.position + (Vector3.up);
+            Vector3 origin = playerTransform.position + (Vector3.up);
             Sensor s = sensors[i];
             distances[i] = maxDistance;
             wallNormals[i] = Vector3.up;
 
-            Vector3 currentWorldDir = transform.TransformDirection(s.dir);
+            Vector3 currentWorldDir = playerTransform.TransformDirection(s.dir);
             Vector3 rawDir = currentWorldDir;
 
             if (s.name != "Up" && s.name != "Down")
@@ -209,7 +216,9 @@ public class DetectingWall : MonoBehaviour
 
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
 
-                s.ui.text = $"{s.name} {hitTag} Detected. Distance: {distances[i]:F2} Hardness: {hardnesses[i]} Jagness: {jagnesses[i]}";
+              
+                    s.ui.text = $"{s.name} {hitTag} Detected. Distance: {distances[i]:F2} Hardness: {hardnesses[i]} Jagness: {jagnesses[i]}";
+                
             }
             else
             {
@@ -219,8 +228,9 @@ public class DetectingWall : MonoBehaviour
                 wallOrigins[i] = Vector3.zero;
                 wallNormals[i] = Vector3.zero;
 
-
-                s.ui.text = $"{s.name} Distance: {distances[i]}";
+               
+                    s.ui.text = $"{s.name} Distance: {distances[i]}";
+                
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
      
             }
