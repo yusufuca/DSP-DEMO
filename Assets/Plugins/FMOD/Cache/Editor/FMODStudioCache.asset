@@ -141,10 +141,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639052012127617056
+  lastModified: 639052521842227425
   FileSizes:
   - Name: Desktop
-    Value: 1114464
+    Value: 1115520
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -245,6 +245,30 @@ MonoBehaviour:
   MinDistance: 1
   MaxDistance: 20
   Length: 558
+--- !u!114 &-2163307652180776971
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/MusicLoops/rawPan
+  m_EditorClassIdentifier: 
+  Name: rawPan
+  StudioPath: 
+  Min: -1
+  Max: 1
+  Default: 0
+  ID:
+    data1: 1671935180
+    data2: 1906418122
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &-2157548165149385607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -317,11 +341,12 @@ MonoBehaviour:
   Banks:
   - {fileID: -5301400106237859156}
   IsStream: 1
-  Is3D: 0
+  Is3D: 1
   IsOneShot: 1
   Parameters:
   - {fileID: 2543574895382346617}
   - {fileID: 3061655107873365548}
+  - {fileID: -2163307652180776971}
   MinDistance: 4.8
   MaxDistance: 8
   Length: 16056
@@ -369,7 +394,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639052012127641642
+  cacheTime: 639052521842267621
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -569,10 +594,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639052012127641642
+  lastModified: 639052521842267621
   FileSizes:
   - Name: Desktop
-    Value: 1944
+    Value: 1992
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:

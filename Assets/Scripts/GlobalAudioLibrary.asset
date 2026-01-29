@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc27cc0ce243f1640ab02353c738038d, type: 3}
+  m_Name: GlobalAudioLibrary
+  m_EditorClassIdentifier: 
+  allSources:
+  - tagID: speaker
+    isStatic: 0
+    rayOffset: {x: 0, y: 1.5, z: 0}
+    obstructionLayer:
+      serializedVersion: 2
+      m_Bits: 64
+    maxHearingDistance: 50
+    occlusionLerpSpeed: 10
+    openFreq: 22000
+    closedFreq: 10
+    openVol: 0
+    closedVol: -30
+    frontFreq: 22000
+    backFreq: 10000
