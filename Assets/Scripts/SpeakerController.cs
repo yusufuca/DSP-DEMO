@@ -2,232 +2,170 @@
 
 public class SpeakerController : AudioSourceBase
 {
-
     [Header("Pan Settings")]
-
     public float minPanStrength = 0.5f;
     public float maxPanStrength = 1.0f;
 
+    [Header("Portal Settings")]
+    [Tooltip("Portalın oyuncuyu görme açısı. 0.0 = Tam 90 derece yanlar dahil, 1.0 = Sadece tam karşıdan.")]
+    [Range(0.0f, 1.0f)] public float portalViewThreshold = 0.2f; // Eşik Değeri
+
+    // Odamız (FloodFill tarafından bulunur)
+    public RoomManager.RoomData myRoom;
+
+    // FMOD Parametre ID'si (Reverb Gönderimi için)
+    private FMOD.Studio.PARAMETER_ID roomSendID;
+
     protected override void Start()
     {
-
         base.Start();
-
-
         if (currentProfile != null && currentProfile.isStatic)
+            StartCoroutine(InitRoom());
+
+        if (emitter.EventDescription.isValid())
         {
-            StartCoroutine(DelayedRoomScan());
+            FMOD.Studio.PARAMETER_DESCRIPTION desc;
+            emitter.EventDescription.getParameterDescriptionByName("RoomSend", out desc);
+            roomSendID = desc.id;
         }
     }
-    System.Collections.IEnumerator DelayedRoomScan()
+
+    System.Collections.IEnumerator InitRoom()
     {
-        // 0.5 saniye bekle, sistem otursun
         yield return new WaitForSeconds(0.5f);
         OnRoomEnter();
     }
 
     public override void OnRoomEnter()
     {
-        FloodFill myScanner = GetComponent<FloodFill>();
-        if (myScanner != null)
+        FloodFill scanner = GetComponent<FloodFill>();
+        if (scanner != null)
         {
-            // Odayı tara ve SourceRoom'a kaydet
-            myScanner.GetOrCalculateRoom((room) =>
+            scanner.GetOrCalculateRoom((room) =>
             {
-                SourceRoom = room; // <--- Kimlik Kartı İşlendi!
-                Debug.Log($"[Speaker] {name} kendi odasını buldu: {room.roomID}");
+                myRoom = room;
             });
         }
-        else
-        {
-            Debug.LogError("[Speaker] FloodFill bileşeni eksik!");
-        }
     }
+
     protected override void CalculatePhysics()
     {
-
-        bool isSameRoom = false;
+        if (currentProfile == null) return;
         Vector3 sourcePos = transform.position + currentProfile.rayOffset;
         Vector3 playerPos = playerTransform.position;
-        Vector3 toSource = sourcePos - playerPos;
-        float dist = toSource.magnitude;
-        currentDistance = dist;
+        float directDist = Vector3.Distance(sourcePos, playerPos); // Direkt mesafe
 
-      
+        // -----------------------------------------------------------
+        // ADIM 1: DİREKT SİNYAL (Her zaman hesaplanır - Referans Ray)
+        // -----------------------------------------------------------
+        // Bu, duvarın arkasındaki "Dry" sesi temsil eder.
+        // Debug için her zaman Kırmızı/Yeşil çizelim ki "Asıl Kaynak" yerini unutmayalım.
+        Color directColor = isDirectConnection ? Color.green : new Color(1, 0, 0, 0.3f); // Soluk Kırmızı
+        Debug.DrawLine(sourcePos, playerPos, directColor);
 
-
-        if (ReverbManager.RevInstance != null)
+        // SENARYO 1: Engel Yok (Aynı Odayız ve Görüş Var)
+        if (isDirectConnection)
         {
-            var playerRoom = ReverbManager.RevInstance.GetPlayerRoom();
+            frequencyWinner = "DIRECT";
+            // Portal olsa bile direkt görüş varsa direkt ses baskındır.
+            ApplyAudio(sourcePos, playerPos, directDist, false, false, 0.0f);
+            return;
+        }
 
-            // İkimizin de odası belli mi ve aynı mı?
-            if (SourceRoom != null && playerRoom != null)
+        // -----------------------------------------------------------
+        // ADIM 2: PORTAL SİNYALİ (Engel Var - Kapı Arıyoruz)
+        // -----------------------------------------------------------
+        if (myRoom != null && myRoom.portals.Count > 0)
+        {
+            RoomManager.PortalData bestPortal = null;
+            float bestScore = float.MaxValue;
+            bool isInTriggerZone = false;
+
+            foreach (var portal in myRoom.portals)
             {
-                isSameRoom = (SourceRoom == playerRoom); // Referans karşılaştırması
+                // 1. AÇI KONTROLÜ (Threshold)
+                // Portalın dışarı bakan yüzü ile oyuncu arasındaki açı
+                Vector3 portalForward = portal.rotation * Vector3.forward; // Portalın baktığı yön
+                Vector3 dirToPlayer = (playerPos - portal.position).normalized;
+
+                // Dot Product: 1 (Tam Karşı), 0 (Tam Yan), -1 (Arkası)
+                float dot = Vector3.Dot(portalForward, dirToPlayer);
+
+                // Eğer oyuncu portalın arkasında veya çok yanındaysa bu portalı kullanma!
+                // threshold ne kadar yüksekse, oyuncunun o kadar portalın karşısında olması gerekir.
+                if (dot < portalViewThreshold) continue;
+
+                // 2. MESAFE KONTROLÜ
+                float distToPlayer = Vector3.Distance(portal.position, playerPos);
+                float distToSource = Vector3.Distance(sourcePos, portal.position);
+                float totalDist = distToPlayer + distToSource;
+
+                if (totalDist < bestScore)
+                {
+                    bestScore = totalDist;
+                    bestPortal = portal;
+                }
+
+                if (portal.triggerZone.Contains(playerPos)) isInTriggerZone = true;
             }
-            // Eğer ikimiz de "Dışarıdaysak" (null), aynı oda sayabiliriz (opsiyonel)
-            else if (SourceRoom == null && playerRoom == null)
+
+            if (bestPortal != null)
             {
-                isSameRoom = true;
+                // --- PORTAL BULUNDU VE GÖRÜŞ AÇISINDAYIZ ---
+                isPortalConnection = true;
+                portalFound = true;
+                portalPosition = bestPortal.position;
+
+                // Portal Debug (Cyan)
+                Debug.DrawLine(sourcePos, bestPortal.position, Color.cyan);
+                Debug.DrawLine(bestPortal.position, playerPos, Color.cyan);
+
+                frequencyWinner = "PORTAL";
+
+                // Reverb Spill: TriggerZone'daysak Full, uzaktaysak az.
+                float reverbSpillAmount = isInTriggerZone ? 1.0f : 0.5f;
+
+                // Sesi Portal Pozisyonundan Ver
+                ApplyAudio(bestPortal.position, playerPos, bestScore, true, false, reverbSpillAmount);
+                return;
             }
         }
 
-        if (isSameRoom)
-        {
-           
-            HandleDirectPhysics(sourcePos, playerPos, dist);
+        // -----------------------------------------------------------
+        // SENARYO 3: DUVAR ARKASI (Portal Yok veya Açı Kötü)
+        // -----------------------------------------------------------
+        // Portal görüş açısından çıktık, artık ses direkt duvardan (boğuk) gelmeli.
+        isPortalConnection = false;
+        portalFound = false;
+        frequencyWinner = "WALL";
 
-           
-        }
-        else
-        {
-          
+        // Debug: Tam Kırmızı (Duvar Arkası)
+        Debug.DrawLine(sourcePos, playerPos, Color.red);
 
-            HandleDifferentRoomPhysics(sourcePos, playerPos, dist);
-        }
+        ApplyAudio(sourcePos, playerPos, directDist, false, true, 0.0f);
     }
 
-    void HandleDirectPhysics(Vector3 sourcePos, Vector3 playerPos, float dist)
+    void ApplyAudio(Vector3 origin, Vector3 target, float distance, bool isPortal, bool isWall, float reverbSend)
     {
-        Vector3 toSource = sourcePos - playerPos;
-        Vector3 dirNormalized = toSource.normalized;
-        currentDistance = dist;
-
-        float distFactor = Mathf.Clamp01(1f - (dist / currentProfile.maxHearingDistance));
+        float distFactor = Mathf.Clamp01(1f - (distance / currentProfile.maxHearingDistance));
         distFactor = Mathf.Max(distFactor, 0.0f);
 
-        float wallFactor = 1f;
-        RaycastHit hit;
+        float wallPenalty = isWall ? 0.3f : 1.0f;
+        float finalTrans = distFactor * wallPenalty;
 
-        if (Physics.Linecast(sourcePos, playerPos, out hit, currentProfile.obstructionLayer))
+        targetVol = Mathf.Lerp(currentProfile.closedVol, currentProfile.openVol, finalTrans);
+
+        if (isPortal) targetFreq = currentProfile.openFreq;
+        else if (isWall) targetFreq = currentProfile.closedFreq;
+        else targetFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, distFactor);
+
+        Vector3 dir = (origin - playerTransform.position).normalized;
+        float rawPan = Vector3.Dot(playerTransform.right, dir);
+        targetPan = rawPan * Mathf.Lerp(minPanStrength, maxPanStrength, distFactor);
+
+        if (emitter.EventInstance.isValid())
         {
-            isObstructed = true;
-            frequencyWinner = "WALL";
-            string tag = hit.collider.tag;
-            float hardness = 0.5f;
-
-            if (detect != null && detect.GetMaterialInfo(tag, out MaterialDatabase.MaterialData data))
-                hardness = data.hardness;
-
-            wallFactor = 1f - (hardness * 0.8f);
-            Debug.DrawLine(sourcePos, hit.point, Color.red);
+            emitter.EventInstance.setParameterByID(roomSendID, reverbSend);
         }
-        else
-        {
-            isObstructed = false;
-            frequencyWinner = "DIST";
-            Debug.DrawLine(sourcePos, playerPos, Color.green);
-        }
-
-        float finalTransmission = distFactor * wallFactor;
-        float occlusionFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, finalTransmission);
-
-        targetVol = Mathf.Lerp(currentProfile.closedVol, currentProfile.openVol, finalTransmission);
-
-        float forwardDot = Vector3.Dot(playerTransform.forward, dirNormalized);
-        float directionFreq = currentProfile.frontFreq;
-
-        if (forwardDot < 0)
-        {
-            float fatness = Mathf.Abs(forwardDot);
-            directionFreq = Mathf.Lerp(currentProfile.frontFreq, currentProfile.backFreq, fatness);
-        }
-
-        if (occlusionFreq < directionFreq)
-        {
-            targetFreq = occlusionFreq;
-        }
-        else
-        {
-            targetFreq = directionFreq;
-            frequencyWinner = "ANGLE";
-        }
-
-        float rawPan = Vector3.Dot(playerTransform.right, dirNormalized);
-        float currentDistFactor = Mathf.Clamp01(dist / currentProfile.maxHearingDistance);
-        float dynamicStrength = Mathf.Lerp(minPanStrength, maxPanStrength, currentDistFactor);
-
-        targetPan = rawPan * dynamicStrength;
-    }
-
-    void HandleDifferentRoomPhysics(Vector3 sourcePos, Vector3 playerPos, float dist)
-    {
-        // 1. PORTAL TARAMASI YAP
-        if (usePortalScanning)
-        {
-            // AudioSourceBase'deki fonksiyonu tetikle (Portal var mı?)
-            ScanForPortal();
-        }
-
-        if (portalFound)
-        {
-            // --- SENARYO A: KAPI/DELİK BULUNDU (HELMHOLTZ ETKİSİ) ---
-            // Ses kapıdan sızıyor. Oyuncu sesi kapının olduğu yerden duymalı.
-
-            // Görselleştirme: Camgöbeği (Cyan) yol
-            Debug.DrawLine(sourcePos, portalPosition, Color.cyan);
-            Debug.DrawLine(portalPosition, playerPos, Color.cyan);
-
-            // 1. YENİ MESAFE HESABI (Yol Uzadı)
-            // Sesin kat ettiği yol: Kaynaktan kapıya + Kapıdan kulağa
-            float distSourceToPortal = Vector3.Distance(sourcePos, portalPosition);
-            float distPortalToPlayer = Vector3.Distance(portalPosition, playerPos);
-            float totalPathLength = distSourceToPortal + distPortalToPlayer;
-
-            currentDistance = totalPathLength;
-
-            // 2. YÖN VE PAN (Portal Origininden Duyarız)
-            // Player'ın kafasına göre portal ne tarafta kalıyor?
-            Vector3 dirToPortal = (portalPosition - playerPos).normalized;
-
-            // İletim (Transmission): Kapı açık olduğu için ses havalı ortamdan (1.0f) gelir.
-            // Ama mesafe arttığı için bir düşüş olur.
-            float combinedDistFactor = Mathf.Clamp01(1f - (totalPathLength / currentProfile.maxHearingDistance));
-
-            // Pan'ı Portal'a göre hesapla (Kaynak yönüne göre değil!)
-            // '1.0f' gönderiyoruz çünkü kapı aralığında duvar engeli yok varsayıyoruz.
-            CalculatePanAndFreq(totalPathLength, dirToPortal, 1.0f);
-
-            // 3. SES AYARLARI (Full Wet Sızıntı)
-            // Ses uzaktan geldiği için kısılsın ama boğulmasın (Frekans açık kalsın)
-            targetVol = Mathf.Lerp(0f, currentProfile.openVol, combinedDistFactor);
-            targetFreq = currentProfile.openFreq; // Kapıdan net ses gelir
-
-            // FMOD PARAMETRELERİ (Aux Reverb)
-            // Burada "Ben farklı odadayım, kapıdan duyuluyorum" diyip Aux Reverb'i fulleyebilirsin.
-            // Örn: emitter.EventInstance.setParameterByName("AuxReverb", 1.0f);
-        }
-        else
-        {
-            // --- SENARYO B: KAPALI KUTU (SADECE DUVAR) ---
-            // Portal bulunamadı. Ses mecburen duvardan boğuk şekilde geçecek.
-
-            Debug.DrawLine(sourcePos, playerPos, Color.magenta);
-
-            // Klasik duvar arkası hesaplamasını kullan
-            HandleDirectPhysics(sourcePos, playerPos, dist);
-
-            // EKSTRA CEZA: Farklı odadayız ve kapı yok.
-            // Normal duvar arkasından çok daha boğuk olmalı.
-            targetFreq = Mathf.Min(targetFreq, 400f); // Max 400Hz (Heavy Lowpass)
-            targetVol *= 0.6f; // Ses iyice kısılır
-            portalFound = false;
-            isScannerLocked = false;
-            roomThroughPortal = null;
-            // Aux Reverb kapalı (veya çok az)
-            // emitter.EventInstance.setParameterByName("AuxReverb", 0.0f);
-        }
-    }
-        void CalculatePanAndFreq(float dist, Vector3 dirNormalized, float transmission)
-    {
-        // Frekans hesapları...
-        // ... (Eski kodundaki Angle/Occlusion logic'i) ...
-
-        // Pan hesapları...
-        float rawPan = Vector3.Dot(playerTransform.right, dirNormalized);
-        float currentDistFactor = Mathf.Clamp01(dist / currentProfile.maxHearingDistance);
-        targetPan = rawPan * Mathf.Lerp(minPanStrength, maxPanStrength, currentDistFactor);
     }
 }
-
-

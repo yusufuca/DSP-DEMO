@@ -20,14 +20,30 @@ public class FloodFill : MonoBehaviour
     {
         if (IsScanning) return;
 
-      
+        // 1. Grid Kontrolü (Hızlı)
         if (RoomManager.Instance != null && RoomManager.Instance.TryGetRoomAt(transform.position, out RoomManager.RoomData existingRoom))
         {
-            if (debugDraw) Debug.Log($"[FloodFill] Cache'den geldi: {existingRoom.roomID}");
+            if (debugDraw) Debug.Log($"[FloodFill] Cache'den geldi (Grid): {existingRoom.roomID}");
             onComplete?.Invoke(existingRoom);
             return;
         }
 
+        // 2. Bounds Kontrolü (Yavaş ama Güvenli - Fix için ekledik)
+        // Eğer grid kaçırdıysa ama biz fiziksel olarak bir odanın "kapsama alanındaysak", tekrar tarama yapma!
+        if (RoomManager.Instance != null)
+        {
+            foreach (var room in RoomManager.Instance.allRooms)
+            {
+                if (room.bounds.Contains(transform.position))
+                {
+                    Debug.Log($"[FloodFill] Cache'den geldi (Bounds): {room.roomID}");
+                    onComplete?.Invoke(room);
+                    return;
+                }
+            }
+        }
+
+        // Hiçbiri yoksa taramaya başla
         ScanRoutine(transform.position, onComplete);
     }
 
