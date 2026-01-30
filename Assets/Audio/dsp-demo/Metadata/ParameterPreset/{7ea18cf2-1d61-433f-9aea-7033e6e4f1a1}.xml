@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{7ea18cf2-1d61-433f-9aea-7033e6e4f1a1}">
+		<property name="name">
+			<value>aux2_ReverbTime</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{6a916909-a271-4001-8225-fe4d1f559c1e}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{6a916909-a271-4001-8225-fe4d1f559c1e}">
+		<property name="minimum">
+			<value>100</value>
+		</property>
+		<property name="maximum">
+			<value>20000</value>
+		</property>
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>20000</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using FMODUnity;
 
 public class SpeakerController : AudioSourceBase
 {
@@ -7,14 +8,11 @@ public class SpeakerController : AudioSourceBase
     public float maxPanStrength = 1.0f;
 
     [Header("Portal Settings")]
-    [Tooltip("Portalın oyuncuyu görme açısı. 0.0 = Tam 90 derece yanlar dahil, 1.0 = Sadece tam karşıdan.")]
-    [Range(0.0f, 1.0f)] public float portalViewThreshold = 0.2f; // Eşik Değeri
+    [Range(0.0f, 1.0f)] public float portalViewThreshold = 0.2f;
 
-    // Odamız (FloodFill tarafından bulunur)
     public RoomManager.RoomData myRoom;
 
-    // FMOD Parametre ID'si (Reverb Gönderimi için)
-    private FMOD.Studio.PARAMETER_ID roomSendID;
+    private FMOD.Studio.PARAMETER_ID aux1SendID;
 
     protected override void Start()
     {
@@ -25,8 +23,8 @@ public class SpeakerController : AudioSourceBase
         if (emitter.EventDescription.isValid())
         {
             FMOD.Studio.PARAMETER_DESCRIPTION desc;
-            emitter.EventDescription.getParameterDescriptionByName("RoomSend", out desc);
-            roomSendID = desc.id;
+            FMOD.RESULT res1 = emitter.EventDescription.getParameterDescriptionByName("Aux1Send", out desc);
+            if (res1 == FMOD.RESULT.OK) aux1SendID = desc.id;
         }
     }
 
@@ -53,49 +51,31 @@ public class SpeakerController : AudioSourceBase
         if (currentProfile == null) return;
         Vector3 sourcePos = transform.position + currentProfile.rayOffset;
         Vector3 playerPos = playerTransform.position;
-        float directDist = Vector3.Distance(sourcePos, playerPos); // Direkt mesafe
+        float directDist = Vector3.Distance(sourcePos, playerPos);
 
-        // -----------------------------------------------------------
-        // ADIM 1: DİREKT SİNYAL (Her zaman hesaplanır - Referans Ray)
-        // -----------------------------------------------------------
-        // Bu, duvarın arkasındaki "Dry" sesi temsil eder.
-        // Debug için her zaman Kırmızı/Yeşil çizelim ki "Asıl Kaynak" yerini unutmayalım.
-        Color directColor = isDirectConnection ? Color.green : new Color(1, 0, 0, 0.3f); // Soluk Kırmızı
-        Debug.DrawLine(sourcePos, playerPos, directColor);
-
-        // SENARYO 1: Engel Yok (Aynı Odayız ve Görüş Var)
+        // 1. Direkt Hat (Temiz)
         if (isDirectConnection)
         {
             frequencyWinner = "DIRECT";
-            // Portal olsa bile direkt görüş varsa direkt ses baskındır.
-            ApplyAudio(sourcePos, playerPos, directDist, false, false, 0.0f);
+            ApplyAudio(sourcePos, playerPos, directDist, false, false, 0);
             return;
         }
 
-        // -----------------------------------------------------------
-        // ADIM 2: PORTAL SİNYALİ (Engel Var - Kapı Arıyoruz)
-        // -----------------------------------------------------------
+        // 2. Portal Kontrolü
         if (myRoom != null && myRoom.portals.Count > 0)
         {
             RoomManager.PortalData bestPortal = null;
             float bestScore = float.MaxValue;
-            bool isInTriggerZone = false;
+            bool isInHitbox = false;
 
             foreach (var portal in myRoom.portals)
             {
-                // 1. AÇI KONTROLÜ (Threshold)
-                // Portalın dışarı bakan yüzü ile oyuncu arasındaki açı
-                Vector3 portalForward = portal.rotation * Vector3.forward; // Portalın baktığı yön
+                Vector3 portalForward = portal.rotation * Vector3.forward;
                 Vector3 dirToPlayer = (playerPos - portal.position).normalized;
-
-                // Dot Product: 1 (Tam Karşı), 0 (Tam Yan), -1 (Arkası)
                 float dot = Vector3.Dot(portalForward, dirToPlayer);
 
-                // Eğer oyuncu portalın arkasında veya çok yanındaysa bu portalı kullanma!
-                // threshold ne kadar yüksekse, oyuncunun o kadar portalın karşısında olması gerekir.
                 if (dot < portalViewThreshold) continue;
 
-                // 2. MESAFE KONTROLÜ
                 float distToPlayer = Vector3.Distance(portal.position, playerPos);
                 float distToSource = Vector3.Distance(sourcePos, portal.position);
                 float totalDist = distToPlayer + distToSource;
@@ -105,47 +85,43 @@ public class SpeakerController : AudioSourceBase
                     bestScore = totalDist;
                     bestPortal = portal;
                 }
-
-                if (portal.triggerZone.Contains(playerPos)) isInTriggerZone = true;
+                if (portal.triggerZone.Contains(playerPos)) isInHitbox = true;
             }
 
             if (bestPortal != null)
             {
-                // --- PORTAL BULUNDU VE GÖRÜŞ AÇISINDAYIZ ---
                 isPortalConnection = true;
                 portalFound = true;
                 portalPosition = bestPortal.position;
 
-                // Portal Debug (Cyan)
                 Debug.DrawLine(sourcePos, bestPortal.position, Color.cyan);
                 Debug.DrawLine(bestPortal.position, playerPos, Color.cyan);
 
                 frequencyWinner = "PORTAL";
 
-                // Reverb Spill: TriggerZone'daysak Full, uzaktaysak az.
-                float reverbSpillAmount = isInTriggerZone ? 1.0f : 0.5f;
+                int assignedAux = 0;
+                if (ReverbManager.RevInstance != null)
+                    assignedAux = ReverbManager.RevInstance.GetAuxIndexForRoom(myRoom);
 
-                // Sesi Portal Pozisyonundan Ver
-                ApplyAudio(bestPortal.position, playerPos, bestScore, true, false, reverbSpillAmount);
+                // Portal aktifse 1.0 (Full Send)
+                float spillAmount = isInHitbox ? 1.0f : 0.0f;
+
+                if (assignedAux > 0) spillAmount = 1.0f;
+
+                ApplyAudio(bestPortal.position, playerPos, bestScore, true, false, assignedAux, spillAmount);
                 return;
             }
         }
 
-        // -----------------------------------------------------------
-        // SENARYO 3: DUVAR ARKASI (Portal Yok veya Açı Kötü)
-        // -----------------------------------------------------------
-        // Portal görüş açısından çıktık, artık ses direkt duvardan (boğuk) gelmeli.
+        // 3. Duvar Arkası
         isPortalConnection = false;
         portalFound = false;
         frequencyWinner = "WALL";
-
-        // Debug: Tam Kırmızı (Duvar Arkası)
         Debug.DrawLine(sourcePos, playerPos, Color.red);
-
-        ApplyAudio(sourcePos, playerPos, directDist, false, true, 0.0f);
+        ApplyAudio(sourcePos, playerPos, directDist, false, true, 0);
     }
 
-    void ApplyAudio(Vector3 origin, Vector3 target, float distance, bool isPortal, bool isWall, float reverbSend)
+    void ApplyAudio(Vector3 origin, Vector3 target, float distance, bool isPortal, bool isWall, int auxIndex, float sendLevel = 0f)
     {
         float distFactor = Mathf.Clamp01(1f - (distance / currentProfile.maxHearingDistance));
         distFactor = Mathf.Max(distFactor, 0.0f);
@@ -155,9 +131,20 @@ public class SpeakerController : AudioSourceBase
 
         targetVol = Mathf.Lerp(currentProfile.closedVol, currentProfile.openVol, finalTrans);
 
-        if (isPortal) targetFreq = currentProfile.openFreq;
-        else if (isWall) targetFreq = currentProfile.closedFreq;
-        else targetFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, distFactor);
+        // --- FREKANS DÜZELTMESİ (HIGH CUT FIX) ---
+        // Portal veya Direkt olsa bile mesafeye göre boğulma eklenir.
+        if (isPortal)
+        {
+            targetFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, distFactor);
+        }
+        else if (isWall)
+        {
+            targetFreq = currentProfile.closedFreq;
+        }
+        else
+        {
+            targetFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, distFactor);
+        }
 
         Vector3 dir = (origin - playerTransform.position).normalized;
         float rawPan = Vector3.Dot(playerTransform.right, dir);
@@ -165,7 +152,28 @@ public class SpeakerController : AudioSourceBase
 
         if (emitter.EventInstance.isValid())
         {
-            emitter.EventInstance.setParameterByID(roomSendID, reverbSend);
+            // Sadece Aux1'i yönetiyoruz
+            emitter.EventInstance.setParameterByName("Aux1Send", 0f);
+
+            if (auxIndex == 1)
+                emitter.EventInstance.setParameterByName("Aux1Send", sendLevel);
+        }
+    }
+
+    void OnDrawGizmos()
+    {
+        if (myRoom != null && myRoom.portals != null)
+        {
+            foreach (var portal in myRoom.portals)
+            {
+                // Hitbox'ı çiz
+                Gizmos.color = Color.blue; 
+                Gizmos.DrawCube(portal.triggerZone.center, portal.triggerZone.size);
+
+                // Çerçevesi
+                Gizmos.color = Color.red;
+                Gizmos.DrawWireCube(portal.triggerZone.center, portal.triggerZone.size);
+            }
         }
     }
 }

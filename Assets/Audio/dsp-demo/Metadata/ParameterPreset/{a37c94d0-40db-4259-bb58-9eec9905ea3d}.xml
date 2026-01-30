@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{a37c94d0-40db-4259-bb58-9eec9905ea3d}">
+		<property name="name">
+			<value>aux1_HighCut</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{dce3b960-b787-433d-aa49-84fb1d2c825a}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{dce3b960-b787-433d-aa49-84fb1d2c825a}">
+		<property name="minimum">
+			<value>20</value>
+		</property>
+		<property name="maximum">
+			<value>20000</value>
+		</property>
+		<property name="isGlobal">
+			<value>true</value>
+		</property>
+		<property name="initialValue">
+			<value>20000</value>
+		</property>
+		<property name="isExposedRecursively">
+			<value>false</value>
+		</property>
+	</object>
+</objects>

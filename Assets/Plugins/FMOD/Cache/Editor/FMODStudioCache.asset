@@ -1,5 +1,29 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9220867600036198884
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/MusicLoops/Aux1Send
+  m_EditorClassIdentifier: 
+  Name: Aux1Send
+  StudioPath: 
+  Min: 0
+  Max: 1
+  Default: 0
+  ID:
+    data1: 3500905720
+    data2: 952737659
+  Type: 0
+  IsGlobal: 0
+  Labels: []
+  Exists: 1
 --- !u!114 &-8510619116720217654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -141,10 +165,34 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639053085337885713
+  lastModified: 639053970347801453
   FileSizes:
   - Name: Desktop
-    Value: 1115520
+    Value: 1118752
+  Exists: 1
+--- !u!114 &-5182191362649089984
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/aux2_HighCut
+  m_EditorClassIdentifier: 
+  Name: aux2_HighCut
+  StudioPath: parameter:/aux2_HighCut
+  Min: 20
+  Max: 20000
+  Default: 20000
+  ID:
+    data1: 2204617088
+    data2: 841695287
+  Type: 0
+  IsGlobal: 1
+  Labels: []
   Exists: 1
 --- !u!114 &-5156096667222458465
 MonoBehaviour:
@@ -347,6 +395,7 @@ MonoBehaviour:
   - {fileID: 2543574895382346617}
   - {fileID: 3061655107873365548}
   - {fileID: -2163307652180776971}
+  - {fileID: -9220867600036198884}
   MinDistance: 4.8
   MaxDistance: 8
   Length: 16056
@@ -389,12 +438,16 @@ MonoBehaviour:
   - {fileID: 3493219100641043508}
   - {fileID: 365925564699357963}
   - {fileID: -2157548165149385607}
+  - {fileID: 7251732332407075294}
+  - {fileID: -5182191362649089984}
+  - {fileID: 8347684849046591986}
+  - {fileID: 6496697480356557350}
   MasterBanks:
   - {fileID: -5301400106237859156}
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639053085337925739
+  cacheTime: 639053970347839522
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -594,10 +647,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639053085337925739
+  lastModified: 639053970347839522
   FileSizes:
   - Name: Desktop
-    Value: 1992
+    Value: 2324
   Exists: 1
 --- !u!114 &6214065512174954345
 MonoBehaviour:
@@ -647,6 +700,54 @@ MonoBehaviour:
   IsGlobal: 1
   Labels: []
   Exists: 1
+--- !u!114 &6496697480356557350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/aux1_ReverbTime
+  m_EditorClassIdentifier: 
+  Name: aux1_ReverbTime
+  StudioPath: parameter:/aux1_ReverbTime
+  Min: 100
+  Max: 20000
+  Default: 20000
+  ID:
+    data1: 682346867
+    data2: 3634202520
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &7251732332407075294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/aux2_ReverbTime
+  m_EditorClassIdentifier: 
+  Name: aux2_ReverbTime
+  StudioPath: parameter:/aux2_ReverbTime
+  Min: 100
+  Max: 20000
+  Default: 20000
+  ID:
+    data1: 1556753525
+    data2: 1337200076
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
 --- !u!114 &7408349101332572715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -667,6 +768,30 @@ MonoBehaviour:
   ID:
     data1: 1575160212
     data2: 48487145
+  Type: 0
+  IsGlobal: 1
+  Labels: []
+  Exists: 1
+--- !u!114 &8347684849046591986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/aux1_HighCut
+  m_EditorClassIdentifier: 
+  Name: aux1_HighCut
+  StudioPath: parameter:/aux1_HighCut
+  Min: 20
+  Max: 20000
+  Default: 20000
+  ID:
+    data1: 3068206068
+    data2: 2622856456
   Type: 0
   IsGlobal: 1
   Labels: []

@@ -5,13 +5,26 @@ public class RoomManager : MonoBehaviour
 {
     public static RoomManager Instance { get; private set; }
 
+    [Header("Hitbox Settings (Tweak Here)")]
+    [Tooltip("Hitbox'ın kapıdan dışarı ne kadar uzayacağı (Derinlik)")]
+    [Range(1f, 10f)] public float hitboxDepth = 4.0f;
+
+    [Tooltip("Hitbox'ın kapıdan içeri ne kadar gireceği (Hata payı)")]
+    [Range(0f, 2f)] public float hitboxInnerPadding = 0.5f;
+
+    [Tooltip("Hitbox'ın yüksekliği")]
+    [Range(2f, 10f)] public float hitboxHeight = 4.0f;
+
+    [Tooltip("Hitbox'ın genişliğine eklenecek ekstra pay")]
+    [Range(0f, 2f)] public float hitboxWidthPadding = 0.2f;
+
     [System.Serializable]
     public class PortalData
     {
         public Vector3 position;
         public Vector3 size;
         public Quaternion rotation;
-        public Bounds triggerZone; // EKSİK OLAN BUYDU, EKLENDİ
+        public Bounds triggerZone;
     }
 
     [System.Serializable]
@@ -24,18 +37,17 @@ public class RoomManager : MonoBehaviour
         public float jagness;
         public Bounds bounds;
         public HashSet<Vector3Int> occupiedCells = new HashSet<Vector3Int>();
-
         public List<PortalData> portals = new List<PortalData>();
     }
 
     public Dictionary<Vector3Int, RoomData> cellToRoomMap = new Dictionary<Vector3Int, RoomData>();
     public List<RoomData> allRooms = new List<RoomData>();
 
-    // Debug Görselleri
     [Header("Debug Visuals")]
     public bool showDebug = true;
     public Color portalColor = new Color(0, 1, 1, 0.5f);
     public Color roomBoundsColor = new Color(0, 1, 0, 0.1f);
+    public Color hitboxColor = new Color(1, 0.5f, 0, 0.4f); // Turuncu
 
     public float nodeSize
     {
@@ -48,6 +60,25 @@ public class RoomManager : MonoBehaviour
         else { Destroy(gameObject); }
     }
 
+    // --- SLIDER DEĞİŞİNCE HITBOX'LARI GÜNCELLE ---
+    private void OnValidate()
+    {
+        // Editörde slider ile oynadığında hitboxları yeniden hesapla
+        if (allRooms != null)
+        {
+            foreach (var room in allRooms)
+            {
+                if (room.portals != null)
+                {
+                    foreach (var portal in room.portals)
+                    {
+                        PortalScanner.UpdatePortalHitbox(portal, hitboxDepth, hitboxInnerPadding, hitboxHeight, hitboxWidthPadding);
+                    }
+                }
+            }
+        }
+    }
+
     public bool TryGetRoomAt(Vector3 worldPos, out RoomData room)
     {
         Vector3Int gridPos = WorldToGrid(worldPos);
@@ -57,7 +88,6 @@ public class RoomManager : MonoBehaviour
     public void RegisterRoom(RoomData newRoom)
     {
         if (newRoom == null) return;
-
         foreach (var cell in newRoom.occupiedCells)
         {
             if (!cellToRoomMap.ContainsKey(cell)) cellToRoomMap.Add(cell, newRoom);
@@ -66,9 +96,14 @@ public class RoomManager : MonoBehaviour
 
         if (!allRooms.Contains(newRoom)) allRooms.Add(newRoom);
 
-        // Odayı kaydederken Portalları tara
         LayerMask wallLayer = DetectingWall.DetectInstance != null ? DetectingWall.DetectInstance.WallLayer : LayerMask.GetMask("Wall");
+
+        // İlk tarama (Varsayılan değerlerle)
         PortalScanner.ScanRoomPortals(newRoom, wallLayer);
+
+        // Sonra bizim slider ayarlarıyla güncelle
+        foreach (var portal in newRoom.portals)
+            PortalScanner.UpdatePortalHitbox(portal, hitboxDepth, hitboxInnerPadding, hitboxHeight, hitboxWidthPadding);
 
         Debug.Log($"[RoomManager] Oda Kaydedildi: {newRoom.roomID} | Portal: {newRoom.portals.Count}");
     }
@@ -82,7 +117,6 @@ public class RoomManager : MonoBehaviour
         );
     }
 
-    // Görsel Debug Çizimi
     private void OnDrawGizmos()
     {
         if (!showDebug) return;
@@ -90,7 +124,6 @@ public class RoomManager : MonoBehaviour
         foreach (var room in allRooms)
         {
             if (room == null) continue;
-
             Gizmos.color = roomBoundsColor;
             Gizmos.DrawWireCube(room.bounds.center, room.bounds.size);
 
@@ -98,17 +131,25 @@ public class RoomManager : MonoBehaviour
             {
                 foreach (var portal in room.portals)
                 {
+                    // Portal Çerçevesi
                     Gizmos.color = portalColor;
                     Gizmos.matrix = Matrix4x4.TRS(portal.position, portal.rotation, portal.size);
                     Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
                     Gizmos.matrix = Matrix4x4.identity;
 
+                    // Yön Oku
                     Gizmos.color = Color.yellow;
                     Gizmos.DrawRay(portal.position, portal.rotation * Vector3.forward * 1.5f);
 
-                    // Trigger Zone
-                    Gizmos.color = new Color(1, 0.5f, 0, 0.2f);
-                    Gizmos.DrawWireCube(portal.triggerZone.center, portal.triggerZone.size);
+                    // HITBOX (Turuncu Kutu)
+                    Gizmos.color = hitboxColor;
+                    // Matrix kullanarak rotasyonlu Bounds çiziyoruz ki kutu yamuk durmasın
+                    Matrix4x4 rotationMatrix = Matrix4x4.TRS(portal.triggerZone.center, portal.rotation, portal.triggerZone.size);
+                    Gizmos.matrix = rotationMatrix;
+                    Gizmos.DrawCube(Vector3.zero, Vector3.one);
+                    Gizmos.color = Color.red;
+                    Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+                    Gizmos.matrix = Matrix4x4.identity;
                 }
             }
         }

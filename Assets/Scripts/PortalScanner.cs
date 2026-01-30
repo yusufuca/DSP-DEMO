@@ -100,33 +100,45 @@ public static class PortalScanner
     private static void FinalizePortal(RoomManager.RoomData room, Vector3 start, Vector3 end, Vector3 facingDir, LayerMask wallLayer)
     {
         float width = Vector3.Distance(start, end);
-        if (width < 0.8f) return; // Çok dar delikleri yoksay
+        if (width < 0.8f) return;
 
         RoomManager.PortalData portal = new RoomManager.PortalData();
-        portal.position = (start + end) / 2f; // Yatay merkez
+        portal.position = (start + end) / 2f;
 
-        // Yükseklik Taraması
+        // Zemin
         float floorY = portal.position.y - 1.5f;
-        float ceilY = portal.position.y + 1.5f;
-
-        // Merkezden yukarı ve aşağı ray atarak tavan/zemin bul
-        if (Physics.Raycast(portal.position, Vector3.up, out RaycastHit hitUp, 5f, wallLayer))
-            ceilY = hitUp.point.y;
-
         if (Physics.Raycast(portal.position, Vector3.down, out RaycastHit hitDown, 5f, wallLayer))
             floorY = hitDown.point.y;
 
-        float height = ceilY - floorY;
-
-        // Yüksekliği düzelt (Pivot merkezde)
-        portal.position.y = floorY + (height / 2f);
-
-        portal.size = new Vector3(width, height, 0.5f);
+        portal.position.y = floorY + 1.0f; // Portal Merkezi
+        portal.size = new Vector3(width, 2.0f, 0.5f);
         portal.rotation = Quaternion.LookRotation(facingDir);
 
-        // Trigger Zone: Kapıdan dışarı ve içeri 1'er metre taşan bir kutu
-        portal.triggerZone = new Bounds(portal.position, new Vector3(width, height, 2.0f));
+        // İlk hesaplama (Default değerlerle)
+        // Sonra RoomManager zaten UpdatePortalHitbox çağırıp düzeltecek
+        UpdatePortalHitbox(portal, 4.0f, 0.5f, 4.0f, 0.2f);
 
         room.portals.Add(portal);
+    }
+    public static void UpdatePortalHitbox(RoomManager.PortalData portal, float depth, float innerPadding, float height, float widthPadding)
+    {
+        // 1. Toplam Derinlik: İçeri Pay + Dışarı Pay
+        float totalDepth = innerPadding + depth;
+
+        // 2. Merkez Kaydırma (Center Shift)
+        // Hitbox'ın merkezi, Portal merkezinden dışarı doğru kaymalı.
+        // Ne kadar? -> (Toplam Derinlik / 2) - İçeri Pay
+        // Örn: Derinlik 4, İçeri 0.5 -> Toplam 4.5 -> Yarısı 2.25 -> Shift = 2.25 - 0.5 = 1.75 birim dışarı.
+
+        float centerShift = (totalDepth / 2.0f) - innerPadding;
+        Vector3 forward = portal.rotation * Vector3.forward;
+        Vector3 newCenter = portal.position + (forward * centerShift);
+
+        // Yüksekliği de yerden başlatmak yerine merkezden başlatıp büyütüyoruz
+        // Ama Y eksenini portal merkezinde (yerden 1m yukarı) tutarsak, height 4 olunca yere -1, tavana +3 gider.
+        // Bu yüzden Y'yi biraz yukarı kaldırabiliriz veya portal merkezine sabitleyebiliriz.
+        // Şimdilik portal merkezine (yerden 1m) sabitliyoruz, height artarsa yere ve tavana eşit büyür.
+
+        portal.triggerZone = new Bounds(newCenter, new Vector3(portal.size.x + widthPadding, height, totalDepth));
     }
 }

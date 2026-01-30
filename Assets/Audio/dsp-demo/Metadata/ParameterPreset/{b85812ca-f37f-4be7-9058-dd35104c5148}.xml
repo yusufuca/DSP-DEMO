@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objects serializationModel="Studio.02.03.00">
+	<object class="ParameterPreset" id="{b85812ca-f37f-4be7-9058-dd35104c5148}">
+		<property name="name">
+			<value>Aux2Send</value>
+		</property>
+		<relationship name="folder">
+			<destination>{e8854374-8cb0-41d3-8ad2-bb09b5200776}</destination>
+		</relationship>
+		<relationship name="parameter">
+			<destination>{a9b380ba-2951-4eed-94f1-08a116834889}</destination>
+		</relationship>
+	</object>
+	<object class="GameParameter" id="{a9b380ba-2951-4eed-94f1-08a116834889}">
+		<property name="initialValue">
+			<value>0</value>
+		</property>
+	</object>
+</objects>

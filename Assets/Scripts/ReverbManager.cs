@@ -3,6 +3,7 @@ using FMOD.Studio;
 using FMODUnity;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using TMPro;
 using UnityEngine;
@@ -21,6 +22,16 @@ public class ReverbManager : MonoBehaviour
     private FMOD.Studio.PARAMETER_ID reverbTimeID, earlyDelayID, lateDelayID, onOFID, diffusionID, densityID, hfDecayID, hfRefID,
        highCutID, delayMixID, dLateID, dHighCutID, outdoorReverbTimeID, dFeedbackID, lowGainID, lowFreqID, dReverbMixID;
 
+    private PARAMETER_ID aux1_TimeID, aux1_DelayID, aux1_DiffID, aux1_HFCutID;
+    private PARAMETER_ID aux2_TimeID, aux2_DelayID, aux2_DiffID, aux2_HFCutID;
+
+    public Dictionary<RoomManager.RoomData, int> roomToAuxMap = new Dictionary<RoomManager.RoomData, int>();
+
+    [Header("Portal Cone Settings")]
+    [Tooltip("Kapının önündeki koninin açısı (Derece cinsinden). Örn: 45 derece.")]
+    public float portalConeAngle = 45f;
+    [Tooltip("Bu koninin ne kadar uzağına kadar algılama yapılsın?")]
+    public float portalConeRange = 5.0f;
 
     public struct ReverbState
     {
@@ -30,8 +41,8 @@ public class ReverbManager : MonoBehaviour
         public float diffusion;
         public float density;
         public float highCut;
-        public float hfDecay; 
-        public float lowFreq; 
+        public float hfDecay;
+        public float lowFreq;
         public float lowGain;
         public float onOF;
 
@@ -64,7 +75,7 @@ public class ReverbManager : MonoBehaviour
 
     private float scanInterval = 5f;
     private bool isChecking = false;
-   
+
 
     [Header("Outdoor / Probe Settings")]
     public float maxProbeDistance = 50f;
@@ -79,11 +90,9 @@ public class ReverbManager : MonoBehaviour
         {
             RevInstance = this;
         }
-
-       
     }
 
-   
+
     public EventReference rifleSfx;
     public EventReference pistolSfx;
     public EventReference clapSFX;
@@ -91,26 +100,18 @@ public class ReverbManager : MonoBehaviour
     public EventReference runSFX;
     public EventReference musicLoops;
     private EventInstance musicInstance;
- 
+
     private void Start()
     {
         detect = DetectingWall.DetectInstance;
-
-       
-
-
-
         InitializeFMODParams();
     }
 
     private void Update()
     {
-
         CalculateMainReverb();
-        // CalculateAuxReverbs();
-
-
         ApplyMainReverbToFMOD();
+
         if (playerTransform == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
@@ -124,52 +125,139 @@ public class ReverbManager : MonoBehaviour
                 return;
             }
         }
-        if (playerScanner == null) playerScanner = playerTransform.gameObject.AddComponent<FloodFill>();
-       
 
-       
+        if (playerScanner == null) playerScanner = playerTransform.gameObject.AddComponent<FloodFill>();
+
         scanTimer += Time.deltaTime;
         if (detect.distances[4] > 2 && !isChecking && scanTimer >= scanInterval)
         {
             CheckCurrentRoom();
             scanTimer = 0f;
         }
-
-        
+        ManageAuxReverbs();
     }
-  
+
+    void ManageAuxReverbs()
+    {
+        if (RoomManager.Instance == null) return;
+        roomToAuxMap.Clear();
+
+        RoomManager.RoomData bestRoom = null;
+
+        // Tüm odaların tüm portallarını gez
+        foreach (var room in RoomManager.Instance.allRooms)
+        {
+            foreach (var portal in room.portals)
+            {
+                // --- DÜZELTME: ARTIK ROTASYONLU KONTROL YAPIYORUZ ---
+                if (IsPlayerInPortalHitbox(portal))
+                {
+                    // İçindeyiz! Bu oda Aux reverb'ü hak ediyor.
+                    bestRoom = room;
+                    break; // İlk bulduğumuz yeterli
+                }
+            }
+            if (bestRoom != null) break;
+        }
+
+        // Bulunan odayı Aux 1'e ata
+        if (bestRoom != null)
+        {
+            roomToAuxMap[bestRoom] = 1;
+            UpdateAuxParams(1, bestRoom);
+        }
+    }
+
+    // --- EKSİK OLAN MATEMATİKSEL FONKSİYON ---
+    bool IsPlayerInPortalHitbox(RoomManager.PortalData portal)
+    {
+        // Oyuncunun Dünya Pozisyonu
+        Vector3 playerPos = playerTransform.position;
+
+        // Portalın Hitbox Verileri
+        Vector3 boxCenter = portal.triggerZone.center;
+        Quaternion boxRot = portal.rotation;
+        Vector3 boxSize = portal.triggerZone.size;
+
+        // 1. Oyuncuyu kutu merkezine göre ötele (Translate)
+        Vector3 dir = playerPos - boxCenter;
+
+        // 2. Oyuncuyu kutunun ters rotasyonuyla döndür (Inverse Rotate)
+        // Bu işlem oyuncuyu "Kutunun Yerel Uzayına" taşır.
+        Vector3 localPos = Quaternion.Inverse(boxRot) * dir;
+
+        // 3. Basit Kutu Kontrolü (Yerel uzayda kutu düzdür)
+        bool insideX = Mathf.Abs(localPos.x) <= (boxSize.x / 2f);
+        bool insideY = Mathf.Abs(localPos.y) <= (boxSize.y / 2f);
+        bool insideZ = Mathf.Abs(localPos.z) <= (boxSize.z / 2f);
+
+        return insideX && insideY && insideZ;
+    }
+
+    public int GetAuxIndexForRoom(RoomManager.RoomData room)
+    {
+        if (room == null) return 0;
+        if (roomToAuxMap.TryGetValue(room, out int index)) return index;
+        return 0;
+    }
+
+    ReverbState CalculateReverbForRoom(RoomManager.RoomData data)
+    {
+        ReverbState state = new ReverbState();
+        if (data == null) return state;
+
+        float vol = data.volume;
+        float hard = data.hardness;
+
+        float rawTime = vol * hard * 0.05f * 1000f;
+        state.reverbTime = Mathf.Clamp(rawTime, 100f, 10000f);
+        state.highCut = 2000f + (hard * 18000f);
+        state.diffusion = hard * 100f;
+        state.earlyDelay = (vol / 100f) * 20f;
+
+        return state;
+    }
+
+    void UpdateAuxParams(int auxIndex, RoomManager.RoomData data)
+    {
+        ReverbState state = CalculateReverbForRoom(data);
+
+        if (auxIndex == 1)
+        {
+            // FMOD Aux 1 Parametrelerini Set Et
+            RuntimeManager.StudioSystem.setParameterByID(aux1_TimeID, state.reverbTime);
+            RuntimeManager.StudioSystem.setParameterByID(aux1_HFCutID, state.highCut);
+        }
+        else if (auxIndex == 2)
+        {
+            RuntimeManager.StudioSystem.setParameterByID(aux2_TimeID, state.reverbTime);
+            RuntimeManager.StudioSystem.setParameterByID(aux2_HFCutID, state.highCut);
+        }
+    }
+
     void CheckCurrentRoom()
     {
         if (RoomManager.Instance == null) return;
 
         Vector3 checkPos = playerTransform.position;
 
-        // ADIM 1: Zaten bildiğimiz bir odada mıyız? (Cache Kontrolü)
         if (RoomManager.Instance.TryGetRoomAt(checkPos, out RoomManager.RoomData room))
         {
             Debug.Log($"[ReverbManager] Kayıtlı odaya girildi: {room.roomID}");
-            // Evet, kayıtlı bir odadayız.
-           
-                currentRoomData = room;
-               
-           
-            // Kayıtlı odadaysak başka işlem yapmaya gerek yok.
+            currentRoomData = room;
         }
         else
         {
-            // ADIM 2: Kayıtlı değil. Peki tepemizde tavan var mı? (Yeni Oda Taraması)
             float ceilingDist = detect.distances[4];
             bool hasCeiling = ceilingDist > 0 && ceilingDist < 20f;
 
             if (hasCeiling)
             {
-                // Tavan var ama RoomManager bu odayı bilmiyor. -> TARA!
                 if (!playerScanner.IsScanning)
                 {
                     isChecking = true;
                     Debug.Log($"[ReverbManager] YENİ ODA TESPİT EDİLDİ (Tavan: {ceilingDist:F1}m). Tarama Başlatılıyor...");
 
-                    // FloodFill'i başlat
                     playerScanner.GetOrCalculateRoom((newRoom) =>
                     {
                         currentRoomData = newRoom;
@@ -180,7 +268,6 @@ public class ReverbManager : MonoBehaviour
             }
             else
             {
-                // Tavan da yok, kayıt da yok -> Dışarısı
                 currentRoomData = null;
                 isChecking = false;
             }
@@ -194,12 +281,10 @@ public class ReverbManager : MonoBehaviour
 
         if (isCeilingDetected && hasRoomData)
         {
-
             float vol = currentRoomData.volume;
             float hard = currentRoomData.hardness;
             float jag = currentRoomData.jagness;
 
-            
             float rawReverbTime = vol * hard * detect.reverbSizePar * 1000f;
             mainReverbState.reverbTime = Mathf.Clamp(rawReverbTime, 100f, 20000f);
 
@@ -223,10 +308,8 @@ public class ReverbManager : MonoBehaviour
             }
             mainReverbState.lateDelay = Mathf.Clamp(mainReverbState.lateDelay, 0, 100);
 
-
             float difVolumeBonus = (mainReverbState.reverbTime / 20000) * 20;
             mainReverbState.diffusion = Mathf.Clamp((jag * 100) + difVolumeBonus, 0, 100);
-
 
             if (detect.distances[4] + detect.distances[5] > 10)
             {
@@ -261,13 +344,11 @@ public class ReverbManager : MonoBehaviour
         }
         else
         {
-           
-            CalculateOutdoorEcho(); 
+            CalculateOutdoorEcho();
 
             mainReverbState.reverbTime = outdoorReverbTimeCalc;
             mainReverbState.outdoorReverbTime = outdoorReverbTimeCalc;
 
-           
             mainReverbState.earlyDelay = dLateDelayCalc;
             mainReverbState.lateDelay = 0f;
 
@@ -281,7 +362,6 @@ public class ReverbManager : MonoBehaviour
 
             mainReverbState.onOF = 0f;
 
-        
             mainReverbState.delayMixDB = Mathf.Lerp(-80f, 10f, outMixCalc);
             mainReverbState.dReverbMixDB = Mathf.Lerp(-80f, 0f, dReverbMixCalc);
 
@@ -304,7 +384,6 @@ public class ReverbManager : MonoBehaviour
         RuntimeManager.StudioSystem.setParameterByID(lowFreqID, mainReverbState.lowFreq);
         RuntimeManager.StudioSystem.setParameterByID(lowGainID, mainReverbState.lowGain);
 
-        // Outdoor / Echo Params
         RuntimeManager.StudioSystem.setParameterByID(dLateID, mainReverbState.dLateDelay);
         RuntimeManager.StudioSystem.setParameterByID(outdoorReverbTimeID, mainReverbState.outdoorReverbTime);
         RuntimeManager.StudioSystem.setParameterByID(dHighCutID, mainReverbState.dHighCut);
@@ -318,7 +397,6 @@ public class ReverbManager : MonoBehaviour
         float closestDist = maxProbeDistance;
         int closestIndex = -1;
 
-
         for (int i = 0; i < 4; i++)
         {
             if (detect.distances[i] > 0 && detect.distances[i] < closestDist)
@@ -328,7 +406,6 @@ public class ReverbManager : MonoBehaviour
             }
         }
 
-
         if (closestIndex == -1)
         {
             dLateDelayCalc = 0; dFeedbackCalc = 0; dDiffusionCalc = 0;
@@ -337,16 +414,10 @@ public class ReverbManager : MonoBehaviour
             return;
         }
 
-
         Vector3 hitPoint = detect.wallOrigins[closestIndex];
         Vector3 wallNormal = detect.wallNormals[closestIndex];
         Vector3 probeOrigin = hitPoint + (wallNormal * 2.0f);
-
-
-
-
         Vector3 rainOrigin = probeOrigin + (Vector3.up * 15f);
-
 
         UnityEngine.Debug.DrawLine(hitPoint, probeOrigin, Color.yellow);
         UnityEngine.Debug.DrawLine(rainOrigin, probeOrigin, Color.cyan);
@@ -355,23 +426,15 @@ public class ReverbManager : MonoBehaviour
         float structureVolume = 0f;
         RaycastHit roofHit;
 
-
         if (Physics.Raycast(rainOrigin, Vector3.down, out roofHit, 15f, detect.WallLayer))
         {
-
-
             if (roofHit.point.y > probeOrigin.y + 0.5f)
             {
                 isStructure = true;
-
-
                 float sizeX = GetRayDist(probeOrigin, Vector3.right) + GetRayDist(probeOrigin, Vector3.left);
                 float sizeZ = GetRayDist(probeOrigin, Vector3.forward) + GetRayDist(probeOrigin, Vector3.back);
-
-
                 float floorDist = GetRayDist(probeOrigin, Vector3.down);
                 float totalHeight = (roofHit.point.y - probeOrigin.y) + floorDist;
-
                 structureVolume = sizeX * sizeZ * totalHeight;
             }
         }
@@ -380,7 +443,6 @@ public class ReverbManager : MonoBehaviour
 
         if (isStructure)
         {
-
             dReverbMixCalc = 1.0f;
             outdoorReverbTimeCalc = Mathf.Clamp(0.4f + (structureVolume * 0.005f), 0.4f, 1.2f);
             dHighCutCalc = Mathf.Clamp(20000f - (structureVolume * 15f), 1000f, 20000f);
@@ -390,7 +452,6 @@ public class ReverbManager : MonoBehaviour
         }
         else
         {
-
             dReverbMixCalc = 0.0f;
             outdoorReverbTimeCalc = 0f;
             dHighCutCalc = 20000f;
@@ -405,7 +466,6 @@ public class ReverbManager : MonoBehaviour
         if (Physics.Raycast(origin, dir, out RaycastHit hit, 20f, detect.WallLayer)) return hit.distance;
         return 20f;
     }
-
 
     void InitializeFMODParams()
     {
@@ -426,8 +486,13 @@ public class ReverbManager : MonoBehaviour
         GetParamID("dHighCut", out dHighCutID);
         GetParamID("dFeedback", out dFeedbackID);
         GetParamID("dReverbMix", out dReverbMixID);
-    }
 
+        GetParamID("aux1_ReverbTime", out aux1_TimeID);
+        GetParamID("aux1_HighCut", out aux1_HFCutID);
+
+        GetParamID("aux2_ReverbTime", out aux2_TimeID);
+        GetParamID("aux2_HighCut", out aux2_HFCutID);
+    }
 
     void GetParamID(string name, out FMOD.Studio.PARAMETER_ID id)
     {
@@ -440,6 +505,4 @@ public class ReverbManager : MonoBehaviour
     {
         return currentRoomData;
     }
-
-
 }

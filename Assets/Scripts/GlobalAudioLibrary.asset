@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allSources:
   - tagID: speaker
-    isStatic: 0
+    isStatic: 1
     rayOffset: {x: 0, y: 1.5, z: 0}
     obstructionLayer:
       serializedVersion: 2
       m_Bits: 64
-    maxHearingDistance: 50
+    maxHearingDistance: 100
     occlusionLerpSpeed: 10
     openFreq: 22000
     closedFreq: 10
