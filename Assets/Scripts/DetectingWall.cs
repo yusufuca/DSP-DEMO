@@ -43,6 +43,7 @@ public class DetectingWall : MonoBehaviour
     public float maxDistance = 20f;
     public float nodeSize = 2f;
     public LayerMask WallLayer;
+    public LayerMask FloorLayer;
     public float reverbSizePar = 0.003f;
 
     [Header("Target")]

@@ -72,7 +72,6 @@ public class ReverbManager : MonoBehaviour
     private float dReverbMixCalc = 0f;
 
     private float scanTimer = 0f;
-
     private float scanInterval = 5f;
     private bool isChecking = false;
 
@@ -144,23 +143,20 @@ public class ReverbManager : MonoBehaviour
 
         RoomManager.RoomData bestRoom = null;
 
-        // Tüm odaların tüm portallarını gez
         foreach (var room in RoomManager.Instance.allRooms)
         {
             foreach (var portal in room.portals)
             {
-                // --- DÜZELTME: ARTIK ROTASYONLU KONTROL YAPIYORUZ ---
+                // FIX: Yeni matematiksel kontrolü çağırıyoruz
                 if (IsPlayerInPortalHitbox(portal))
                 {
-                    // İçindeyiz! Bu oda Aux reverb'ü hak ediyor.
                     bestRoom = room;
-                    break; // İlk bulduğumuz yeterli
+                    break;
                 }
             }
             if (bestRoom != null) break;
         }
 
-        // Bulunan odayı Aux 1'e ata
         if (bestRoom != null)
         {
             roomToAuxMap[bestRoom] = 1;
@@ -168,31 +164,28 @@ public class ReverbManager : MonoBehaviour
         }
     }
 
-    // --- EKSİK OLAN MATEMATİKSEL FONKSİYON ---
+    // --- FIX BURADA ---
     bool IsPlayerInPortalHitbox(RoomManager.PortalData portal)
     {
-        // Oyuncunun Dünya Pozisyonu
+        // 1. Oyuncunun Dünya Pozisyonu
         Vector3 playerPos = playerTransform.position;
 
-        // Portalın Hitbox Verileri
-        Vector3 boxCenter = portal.triggerZone.center;
-        Quaternion boxRot = portal.rotation;
-        Vector3 boxSize = portal.triggerZone.size;
+        // 2. Portalın Çapa Noktası (World Space Position)
+        Vector3 portalAnchor = portal.position;
 
-        // 1. Oyuncuyu kutu merkezine göre ötele (Translate)
-        Vector3 dir = playerPos - boxCenter;
+        // 3. Oyuncuyu Portala Göre Yerelleştir (World -> Local Transformation)
+        // Oyuncunun portala olan uzaklık vektörünü bul
+        Vector3 relativeDir = playerPos - portalAnchor;
 
-        // 2. Oyuncuyu kutunun ters rotasyonuyla döndür (Inverse Rotate)
-        // Bu işlem oyuncuyu "Kutunun Yerel Uzayına" taşır.
-        Vector3 localPos = Quaternion.Inverse(boxRot) * dir;
+        // Bu vektörü portalın ters rotasyonuyla çarp ki portal düzmüş gibi hesap yapalım
+        Vector3 localPos = Quaternion.Inverse(portal.rotation) * relativeDir;
 
-        // 3. Basit Kutu Kontrolü (Yerel uzayda kutu düzdür)
-        bool insideX = Mathf.Abs(localPos.x) <= (boxSize.x / 2f);
-        bool insideY = Mathf.Abs(localPos.y) <= (boxSize.y / 2f);
-        bool insideZ = Mathf.Abs(localPos.z) <= (boxSize.z / 2f);
-
-        return insideX && insideY && insideZ;
+        // 4. Bounds Kontrolü
+        // triggerZone artık Local koordinatlarda olduğu için (Center: 0,0,Offset)
+        // yerelleştirdiğimiz oyuncu pozisyonunu doğrudan içinde mi diye sorabiliriz.
+        return portal.triggerZone.Contains(localPos);
     }
+    // ------------------
 
     public int GetAuxIndexForRoom(RoomManager.RoomData room)
     {
@@ -211,6 +204,7 @@ public class ReverbManager : MonoBehaviour
 
         float rawTime = vol * hard * 0.05f * 1000f;
         state.reverbTime = Mathf.Clamp(rawTime, 100f, 10000f);
+
         state.highCut = 2000f + (hard * 18000f);
         state.diffusion = hard * 100f;
         state.earlyDelay = (vol / 100f) * 20f;
@@ -224,7 +218,6 @@ public class ReverbManager : MonoBehaviour
 
         if (auxIndex == 1)
         {
-            // FMOD Aux 1 Parametrelerini Set Et
             RuntimeManager.StudioSystem.setParameterByID(aux1_TimeID, state.reverbTime);
             RuntimeManager.StudioSystem.setParameterByID(aux1_HFCutID, state.highCut);
         }
@@ -285,17 +278,20 @@ public class ReverbManager : MonoBehaviour
             float hard = currentRoomData.hardness;
             float jag = currentRoomData.jagness;
 
+
+            /* REVERB TIME  */
             float rawReverbTime = vol * hard * detect.reverbSizePar * 1000f;
             mainReverbState.reverbTime = Mathf.Clamp(rawReverbTime, 100f, 20000f);
 
+            /* EARLY DELAY */
             float minWallDist = detect.maxDistance;
             for (int i = 0; i < 4; i++) { if (detect.distances[i] > 0 && detect.distances[i] < minWallDist) minWallDist = detect.distances[i]; }
 
             float rawEarlyDelay = (minWallDist / 343f) * 1000f;
             mainReverbState.earlyDelay = Mathf.Clamp(rawEarlyDelay, 0, 300);
 
+            /* LATE DELAY */
             mainReverbState.lateDelay = Mathf.Clamp((mainReverbState.reverbTime * 0.02f), 0, 100);
-
             if (detect.distances[4] + detect.distances[5] > 10)
             {
                 float heightBonus = (detect.distances[4] + detect.distances[5]) - 10f;
@@ -308,6 +304,7 @@ public class ReverbManager : MonoBehaviour
             }
             mainReverbState.lateDelay = Mathf.Clamp(mainReverbState.lateDelay, 0, 100);
 
+            /* DIFFUSION */
             float difVolumeBonus = (mainReverbState.reverbTime / 20000) * 20;
             mainReverbState.diffusion = Mathf.Clamp((jag * 100) + difVolumeBonus, 0, 100);
 
@@ -316,20 +313,26 @@ public class ReverbManager : MonoBehaviour
                 float heightBonus = (detect.distances[4] + detect.distances[5]) - 10f;
                 mainReverbState.diffusion += heightBonus * 1.0f;
             }
+
             mainReverbState.diffusion = Mathf.Clamp(mainReverbState.diffusion, 0, 100);
 
+            /* DENSITY */
             float sizePenalty = (mainReverbState.reverbTime / 20000f) * 50f;
             float jagnessBonus = jag * 40f;
             mainReverbState.density = Mathf.Clamp(100f - sizePenalty + jagnessBonus, 0f, 100f);
 
+            /* HF DECAY */
             mainReverbState.hfDecay = Mathf.Clamp(10f + (hard * 90f), 10f, 100f);
 
+            /* HIGH CUT */
             float materialHighCut = 2000f + (hard * 18000f);
             float airAbsorption = 1f - (mainReverbState.reverbTime / 20000f * 0.8f);
             mainReverbState.highCut = Mathf.Clamp(materialHighCut * airAbsorption, 20f, 20000f);
 
+            /* LOW FREQ */
             mainReverbState.lowFreq = Mathf.Clamp(250f - (mainReverbState.reverbTime / 20000f * 100f), 20f, 1000f);
 
+            /* LOW GAIN */
             float baseLowGain = Mathf.Lerp(-36f, 12f, hard);
             float boundaryBonus = 0f;
             if (minWallDist < 1.5f) boundaryBonus = Mathf.Lerp(16f, 0f, minWallDist);
@@ -340,12 +343,11 @@ public class ReverbManager : MonoBehaviour
             mainReverbState.dReverbMixDB = -80f;
 
             if (roomDataText != null)
-                roomDataText.text = $"INDOOR | Vol:{vol:F0} | Hard:{hard:F2}";
+                roomDataText.text = $"INDOOR | Vol:{vol:F0} | Hard:{hard:F2} Jag: {jag}";
         }
         else
         {
             CalculateOutdoorEcho();
-
             mainReverbState.reverbTime = outdoorReverbTimeCalc;
             mainReverbState.outdoorReverbTime = outdoorReverbTimeCalc;
 
@@ -354,6 +356,7 @@ public class ReverbManager : MonoBehaviour
 
             mainReverbState.diffusion = dDiffusionCalc;
             mainReverbState.density = 100f;
+
             mainReverbState.highCut = dHighCutCalc;
             mainReverbState.dHighCut = dHighCutCalc;
 
@@ -408,7 +411,8 @@ public class ReverbManager : MonoBehaviour
 
         if (closestIndex == -1)
         {
-            dLateDelayCalc = 0; dFeedbackCalc = 0; dDiffusionCalc = 0;
+            dLateDelayCalc = 0;
+            dFeedbackCalc = 0; dDiffusionCalc = 0;
             dHighCutCalc = 20000; outMixCalc = 0; outdoorReverbTimeCalc = 0;
             dReverbMixCalc = 0;
             return;
@@ -489,7 +493,6 @@ public class ReverbManager : MonoBehaviour
 
         GetParamID("aux1_ReverbTime", out aux1_TimeID);
         GetParamID("aux1_HighCut", out aux1_HFCutID);
-
         GetParamID("aux2_ReverbTime", out aux2_TimeID);
         GetParamID("aux2_HighCut", out aux2_HFCutID);
     }

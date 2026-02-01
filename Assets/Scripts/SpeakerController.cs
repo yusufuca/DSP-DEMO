@@ -53,7 +53,7 @@ public class SpeakerController : AudioSourceBase
         Vector3 playerPos = playerTransform.position;
         float directDist = Vector3.Distance(sourcePos, playerPos);
 
-        // 1. Direkt Hat (Temiz)
+        // 1. Direkt Hat
         if (isDirectConnection)
         {
             frequencyWinner = "DIRECT";
@@ -85,7 +85,16 @@ public class SpeakerController : AudioSourceBase
                     bestScore = totalDist;
                     bestPortal = portal;
                 }
-                if (portal.triggerZone.Contains(playerPos)) isInHitbox = true;
+
+                // --- FIX: LOCAL SPACE SORGUSU ---
+                // Oyuncuyu Dünya'dan Portalın Yerel Uzayına taşıyoruz
+                Vector3 relativeDir = playerPos - portal.position;
+                Vector3 localPlayerPos = Quaternion.Inverse(portal.rotation) * relativeDir;
+
+                // Artık yerel Bounds içinde mi diye sorabiliriz
+                if (portal.triggerZone.Contains(localPlayerPos))
+                    isInHitbox = true;
+                // -------------------------------
             }
 
             if (bestPortal != null)
@@ -94,8 +103,8 @@ public class SpeakerController : AudioSourceBase
                 portalFound = true;
                 portalPosition = bestPortal.position;
 
-                Debug.DrawLine(sourcePos, bestPortal.position, Color.cyan);
-                Debug.DrawLine(bestPortal.position, playerPos, Color.cyan);
+                // Debug.DrawLine(sourcePos, bestPortal.position, Color.cyan);
+                // Debug.DrawLine(bestPortal.position, playerPos, Color.cyan);
 
                 frequencyWinner = "PORTAL";
 
@@ -103,9 +112,7 @@ public class SpeakerController : AudioSourceBase
                 if (ReverbManager.RevInstance != null)
                     assignedAux = ReverbManager.RevInstance.GetAuxIndexForRoom(myRoom);
 
-                // Portal aktifse 1.0 (Full Send)
                 float spillAmount = isInHitbox ? 1.0f : 0.0f;
-
                 if (assignedAux > 0) spillAmount = 1.0f;
 
                 ApplyAudio(bestPortal.position, playerPos, bestScore, true, false, assignedAux, spillAmount);
@@ -117,10 +124,9 @@ public class SpeakerController : AudioSourceBase
         isPortalConnection = false;
         portalFound = false;
         frequencyWinner = "WALL";
-        Debug.DrawLine(sourcePos, playerPos, Color.red);
+        // Debug.DrawLine(sourcePos, playerPos, Color.red);
         ApplyAudio(sourcePos, playerPos, directDist, false, true, 0);
     }
-
     void ApplyAudio(Vector3 origin, Vector3 target, float distance, bool isPortal, bool isWall, int auxIndex, float sendLevel = 0f)
     {
         float distFactor = Mathf.Clamp01(1f - (distance / currentProfile.maxHearingDistance));
@@ -131,8 +137,6 @@ public class SpeakerController : AudioSourceBase
 
         targetVol = Mathf.Lerp(currentProfile.closedVol, currentProfile.openVol, finalTrans);
 
-        // --- FREKANS DÜZELTMESİ (HIGH CUT FIX) ---
-        // Portal veya Direkt olsa bile mesafeye göre boğulma eklenir.
         if (isPortal)
         {
             targetFreq = Mathf.Lerp(currentProfile.closedFreq, currentProfile.openFreq, distFactor);
@@ -152,11 +156,19 @@ public class SpeakerController : AudioSourceBase
 
         if (emitter.EventInstance.isValid())
         {
-            // Sadece Aux1'i yönetiyoruz
-            emitter.EventInstance.setParameterByName("Aux1Send", 0f);
-
-            if (auxIndex == 1)
-                emitter.EventInstance.setParameterByName("Aux1Send", sendLevel);
+            // --- FIX: ID KULLANIMI ---
+            // Start fonksiyonunda bulduğumuz ID'yi kullanıyoruz.
+            // ID boş değilse (data1 != 0), FMOD'a bu ID üzerinden erişiyoruz.
+            if (aux1SendID.data1 != 0)
+            {
+                float finalValue = (auxIndex == 1) ? sendLevel : 0f;
+                emitter.EventInstance.setParameterByID(aux1SendID, finalValue);
+            }
+            else
+            {
+                // Fallback (ID bulunamadıysa isimle dene)
+                emitter.EventInstance.setParameterByName("Aux1Send", (auxIndex == 1) ? sendLevel : 0f);
+            }
         }
     }
 

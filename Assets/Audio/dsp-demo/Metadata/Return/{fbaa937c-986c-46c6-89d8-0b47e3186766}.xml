@@ -4,6 +4,9 @@
 		<property name="name">
 			<value>AuxRev_1</value>
 		</property>
+		<relationship name="automators">
+			<destination>{cd112b9f-9689-48f6-beb4-37cf5d16001e}</destination>
+		</relationship>
 		<relationship name="effectChain">
 			<destination>{82af47ab-33c9-40a0-8ed8-fa7cca5eb15f}</destination>
 		</relationship>
@@ -14,6 +17,14 @@
 			<destination>{c2b399fb-9b85-4f3d-aaba-c2ddd007c17e}</destination>
 		</relationship>
 	</object>
+	<object class="Automator" id="{cd112b9f-9689-48f6-beb4-37cf5d16001e}">
+		<property name="nameOfPropertyBeingAutomated">
+			<value>volume</value>
+		</property>
+		<relationship name="automationCurves">
+			<destination>{b30d9416-cf2e-4f63-8840-9eb977bd3fdb}</destination>
+		</relationship>
+	</object>
 	<object class="MixerBusEffectChain" id="{82af47ab-33c9-40a0-8ed8-fa7cca5eb15f}">
 		<relationship name="effects">
 			<destination>{1f9ea2b1-d540-439a-b74b-a110fefc50e4}</destination>
@@ -21,6 +32,15 @@
 		</relationship>
 	</object>
 	<object class="MixerBusPanner" id="{c3930e7d-9e0d-4329-aa09-8830a682176d}" />
+	<object class="AutomationCurve" id="{b30d9416-cf2e-4f63-8840-9eb977bd3fdb}">
+		<relationship name="parameter">
+			<destination>{e8a474eb-1a0f-4ef2-9f2a-30f9cd6099b2}</destination>
+		</relationship>
+		<relationship name="automationPoints">
+			<destination>{519d4e93-bf41-4ba8-8334-4dc8c629d7f7}</destination>
+			<destination>{37ff4c4a-f3f3-450d-a224-d94781200988}</destination>
+		</relationship>
+	</object>
 	<object class="SFXReverbEffect" id="{1f9ea2b1-d540-439a-b74b-a110fefc50e4}">
 		<relationship name="automators">
 			<destination>{7836119a-a748-4692-9161-06347d3e3e3a}</destination>
@@ -28,6 +48,22 @@
 		</relationship>
 	</object>
 	<object class="MixerBusFader" id="{9d108f80-779c-4c10-a964-ee7af27faff7}" />
+	<object class="AutomationPoint" id="{519d4e93-bf41-4ba8-8334-4dc8c629d7f7}">
+		<property name="position">
+			<value>0.012711864406779662</value>
+		</property>
+		<property name="value">
+			<value>0</value>
+		</property>
+	</object>
+	<object class="AutomationPoint" id="{37ff4c4a-f3f3-450d-a224-d94781200988}">
+		<property name="position">
+			<value>1</value>
+		</property>
+		<property name="value">
+			<value>-80</value>
+		</property>
+	</object>
 	<object class="Automator" id="{7836119a-a748-4692-9161-06347d3e3e3a}">
 		<property name="nameOfPropertyBeingAutomated">
 			<value>decayTime</value>

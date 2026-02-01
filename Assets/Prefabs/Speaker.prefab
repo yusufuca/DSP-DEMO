@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 5285622137168957372}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -48.71, y: 0, z: -2.11}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -80,23 +80,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   audioLibrary: {fileID: 11400000, guid: 474589df6f3953247a53c8d4692e27b7, type: 2}
-  SourceRoom:
-    roomID: 
-    centerPoint: {x: 0, y: 0, z: 0}
-    volume: 0
-    hardness: 0
-    jagness: 0
-    bounds:
-      m_Center: {x: 0, y: 0, z: 0}
-      m_Extent: {x: 0, y: 0, z: 0}
-  usePortalScanning: 1
-  scanArcAngle: 90
-  scanResolution: 10
-  matchedTag: speaker
-  isIndoors: 0
+  obstructionLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  isDirectConnection: 0
+  isPortalConnection: 0
+  activePortalPos: {x: 0, y: 0, z: 0}
   currentDistance: 0
   isObstructed: 0
   frequencyWinner: 
+  matchedTag: speaker
   portalFound: 0
   portalPosition: {x: 0, y: 0, z: 0}
   roomThroughPortal:
@@ -108,8 +101,22 @@ MonoBehaviour:
     bounds:
       m_Center: {x: 0, y: 0, z: 0}
       m_Extent: {x: 0, y: 0, z: 0}
+    portals: []
+  portalWidth: 0
+  portalHeight: 0
   minPanStrength: 0.5
   maxPanStrength: 1
+  portalViewThreshold: 0.2
+  myRoom:
+    roomID: 
+    centerPoint: {x: 0, y: 0, z: 0}
+    volume: 0
+    hardness: 0
+    jagness: 0
+    bounds:
+      m_Center: {x: 0, y: 0, z: 0}
+      m_Extent: {x: 0, y: 0, z: 0}
+    portals: []
 --- !u!114 &3742107552764237420
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -139,6 +146,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   debugDraw: 1
+  floorLayer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1001 &1879387650762248556
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -161,7 +171,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 3df2746dbbb9fcd4b98280488b85163f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.43
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 3df2746dbbb9fcd4b98280488b85163f, type: 3}
       propertyPath: m_LocalPosition.z

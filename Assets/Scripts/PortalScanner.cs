@@ -1,144 +1,256 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public static class PortalScanner
 {
-    // FloodFill'de Expand(2f) yaptığımız için her kenarda 1 birim şişme var.
-    private const float EXPANSION_MARGIN = 1.0f;
+    // Bir portal parçası: Başlangıç ve Bitiş noktası belli olan bir çizgi
+    public class PortalSegment
+    {
+        public Vector3 start;
+        public Vector3 end;
+        public Vector3Int direction;
+    }
 
     public static void ScanRoomPortals(RoomManager.RoomData room, LayerMask wallLayer)
     {
         room.portals.Clear();
 
-        float stepSize = 1.0f; // 1 metrede bir tara (Daha hassas olsun)
+        // --- AYARLAR ---
+        float nodeSize = RoomManager.Instance.nodeSize;
+        float stepSize = RoomManager.Instance.scanStepSize; // Örn: 0.1f (10cm)
+        float rayOffset = RoomManager.Instance.portalRayOffset; // Örn: -0.1f (Geri çekilme)
+        float rayLength = RoomManager.Instance.portalRayLength; // Örn: 2.0f
 
-        // 1. ZEMİNİ BUL (Center'dan aşağı ray at)
-        float floorY = room.bounds.min.y;
-        if (Physics.Raycast(room.centerPoint, Vector3.down, out RaycastHit floorHit, 100f, wallLayer))
+        // Yükseklik: Odanın tam ortası
+        float rayHeight = room.bounds.center.y;
+
+        List<PortalSegment> rawSegments = new List<PortalSegment>();
+        Vector3Int[] directions = { Vector3Int.forward, Vector3Int.back, Vector3Int.left, Vector3Int.right };
+
+        // --- ADIM 1: SINIRLARI BUL VE TARA (BARCODE SCAN) ---
+        foreach (var cell in room.occupiedCells)
         {
-            floorY = floorHit.point.y;
+            Vector3 cellCenter = new Vector3(cell.x * nodeSize, rayHeight, cell.z * nodeSize);
+
+            foreach (var dir in directions)
+            {
+                // Yanımızdaki hücre odada YOKSA -> Sınırdır.
+                if (!room.occupiedCells.Contains(cell + dir))
+                {
+                    // --- BU KENARI TARA ---
+                    ScanEdgeLinear(cellCenter, dir, nodeSize, rayHeight, stepSize, rayOffset, rayLength, wallLayer, rawSegments);
+                }
+            }
         }
-        else
-        {
-            // Ray bulamazsa bounds'u daraltarak tahmin et
-            floorY = room.bounds.min.y + EXPANSION_MARGIN;
-        }
 
-        // Tarama yüksekliği: Zeminden 1.5m yukarı
-        float scanHeight = floorY + 1.5f;
-
-        // Gerçek Duvar Sınırları (Şişirmeyi geri alıyoruz)
-        float minX = room.bounds.min.x + EXPANSION_MARGIN;
-        float maxX = room.bounds.max.x - EXPANSION_MARGIN;
-        float minZ = room.bounds.min.z + EXPANSION_MARGIN;
-        float maxZ = room.bounds.max.z - EXPANSION_MARGIN;
-
-        // --- 4 DUVARI TARA ---
-
-        // Güney Duvarı (Z = minZ) | X boyunca ilerle | Geriye (Back) bak
-        ScanEdge(room, new Vector3(minX, scanHeight, minZ), Vector3.right, (maxX - minX), Vector3.back, wallLayer, stepSize);
-
-        // Kuzey Duvarı (Z = maxZ) | X boyunca ilerle | İleriye (Forward) bak
-        ScanEdge(room, new Vector3(minX, scanHeight, maxZ), Vector3.right, (maxX - minX), Vector3.forward, wallLayer, stepSize);
-
-        // Batı Duvarı (X = minX) | Z boyunca ilerle | Sola (Left) bak
-        ScanEdge(room, new Vector3(minX, scanHeight, minZ), Vector3.forward, (maxZ - minZ), Vector3.left, wallLayer, stepSize);
-
-        // Doğu Duvarı (X = maxX) | Z boyunca ilerle | Sağa (Right) bak
-        ScanEdge(room, new Vector3(maxX, scanHeight, minZ), Vector3.forward, (maxZ - minZ), Vector3.right, wallLayer, stepSize);
+        // --- ADIM 2: PARÇALARI BİRLEŞTİR (MERGE) ---
+        MergeSegmentsAndCreatePortals(room, rawSegments);
     }
 
-    private static void ScanEdge(RoomManager.RoomData room, Vector3 start, Vector3 moveDir, float length, Vector3 lookDir, LayerMask wallLayer, float step)
+    // Bir kenarı baştan sona milim milim tarar
+    private static void ScanEdgeLinear(Vector3 cellCenter, Vector3Int dir, float nodeSize, float yPos, float step, float offset, float length, LayerMask layer, List<PortalSegment> segments)
     {
-        int steps = Mathf.CeilToInt(length / step);
-        Vector3 gapStart = Vector3.zero;
-        bool isGap = false;
+        Vector3 dirVec = new Vector3(dir.x, 0, dir.z);
 
-        // İçeriden dışarı bakacağımız için origin'i biraz içeri çekelim (0.5m)
-        // lookDir dışarıyı gösteriyor, biz tersine gidip içeri giriyoruz.
-        Vector3 insetOffset = -lookDir * 0.5f;
+        // Yönün sağı (Tarama Hattı)
+        Vector3 rightVec = Vector3.Cross(Vector3.up, dirVec);
+
+        // Kenarın başlangıcı (Sol) ve Bitişi (Sağ)
+        // Kenar uzunluğu nodeSize kadardır. Merkezden sola ve sağa nodeSize/2 gideriz.
+        Vector3 edgeCenter = cellCenter + (dirVec * (nodeSize * 0.5f)); // Kenarın tam ortası (Sınır çizgisi)
+
+        // Raycast Başlangıç Hattı (Offset eklenmiş hali - İçeri çekilmiş hat)
+        Vector3 scanLineCenter = edgeCenter + (dirVec * offset);
+
+        Vector3 startPoint = scanLineCenter - (rightVec * (nodeSize * 0.5f));
+        Vector3 endPoint = scanLineCenter + (rightVec * (nodeSize * 0.5f));
+
+        // --- TARAMA DÖNGÜSÜ ---
+        bool inGap = false;
+        Vector3 gapStart = Vector3.zero;
+
+        // Kaç adım atacağız?
+        int steps = Mathf.CeilToInt(nodeSize / step);
 
         for (int i = 0; i <= steps; i++)
         {
-            Vector3 currentPos = start + (moveDir * (i * step));
-            Vector3 rayOrigin = currentPos + insetOffset;
+            // Lerp ile hat üzerinde yürü
+            float t = (float)i / steps;
+            Vector3 currentPos = Vector3.Lerp(startPoint, endPoint, t);
 
-            // 1.5m uzağa ray at (0.5m içerideyiz + 1m duvar kalınlığı için)
-            bool hitWall = Physics.Raycast(rayOrigin, lookDir, 2.0f, wallLayer);
+            // Raycast At
+            bool hitWall = Physics.Raycast(currentPos, dirVec, length, layer);
 
-            // Debug çizgileri (Scene'de görmek için)
-            // Debug.DrawRay(rayOrigin, lookDir * 2.0f, hitWall ? Color.red : Color.green, 10f);
-
+            // DURUM MAKİNESİ (State Machine)
             if (!hitWall)
             {
-                // BOŞLUK
-                if (!isGap)
+                // Duvar YOK -> Boşluk
+                if (!inGap)
                 {
+                    // Boşluk yeni başladı
+                    inGap = true;
                     gapStart = currentPos;
-                    isGap = true;
                 }
             }
             else
             {
-                // DUVAR
-                if (isGap)
+                // Duvar VAR -> Kapalı
+                if (inGap)
                 {
-                    // Boşluk bitti, kaydet
-                    FinalizePortal(room, gapStart, currentPos - (moveDir * (step * 0.5f)), lookDir, wallLayer);
-                    isGap = false;
+                    // Boşluk bitti, kaydet!
+                    inGap = false;
+                    segments.Add(new PortalSegment
+                    {
+                        start = gapStart,
+                        end = currentPos, // Bittiği yer
+                        direction = dir
+                    });
                 }
             }
         }
 
-        // Köşeye gelince hala boşluksa kapat
-        if (isGap)
+        // Kenar bittiğinde hala boşluktaysak, kenar sonuna kadar kaydet
+        if (inGap)
         {
-            FinalizePortal(room, gapStart, start + (moveDir * length), lookDir, wallLayer);
+            segments.Add(new PortalSegment
+            {
+                start = gapStart,
+                end = endPoint,
+                direction = dir
+            });
         }
     }
 
-    private static void FinalizePortal(RoomManager.RoomData room, Vector3 start, Vector3 end, Vector3 facingDir, LayerMask wallLayer)
+    // --- ADIM 2: BİRLEŞTİRME ---
+    private static void MergeSegmentsAndCreatePortals(RoomManager.RoomData room, List<PortalSegment> segments)
     {
-        float width = Vector3.Distance(start, end);
-        if (width < 0.8f) return;
+        if (segments.Count == 0) return;
 
-        RoomManager.PortalData portal = new RoomManager.PortalData();
-        portal.position = (start + end) / 2f;
+        // Yöne göre grupla
+        var groupedByDir = segments.GroupBy(s => s.direction);
 
-        // Zemin
-        float floorY = portal.position.y - 1.5f;
-        if (Physics.Raycast(portal.position, Vector3.down, out RaycastHit hitDown, 5f, wallLayer))
-            floorY = hitDown.point.y;
+        foreach (var group in groupedByDir)
+        {
+            Vector3Int facingDir = group.Key;
+            List<PortalSegment> dirSegments = group.ToList();
 
-        portal.position.y = floorY + 1.0f; // Portal Merkezi
-        portal.size = new Vector3(width, 2.0f, 0.5f);
-        portal.rotation = Quaternion.LookRotation(facingDir);
+            // Segmentleri hizaya sokmamız lazım ki birleştirebilelim.
+            // Neyle sıralayacağız? Tarama eksenindeki pozisyonlarına göre.
+            // Kuzey/Güney bakıyorsa -> X eksenine göre.
+            // Doğu/Batı bakıyorsa -> Z eksenine göre.
 
-        // İlk hesaplama (Default değerlerle)
-        // Sonra RoomManager zaten UpdatePortalHitbox çağırıp düzeltecek
-        UpdatePortalHitbox(portal, 4.0f, 0.5f, 4.0f, 0.2f);
+            // Basit çözüm: Tüm segmentleri tek tek gezip birleşebilenleri birleştirelim.
+            // Iterative Merge
+            bool changed = true;
+            while (changed)
+            {
+                changed = false;
+                for (int i = 0; i < dirSegments.Count; i++)
+                {
+                    for (int j = i + 1; j < dirSegments.Count; j++)
+                    {
+                        PortalSegment s1 = dirSegments[i];
+                        PortalSegment s2 = dirSegments[j];
 
-        room.portals.Add(portal);
+                        // Birleşebilirler mi?
+                        // (S1 sonu S2 başına yakın mı? Veya tam tersi?)
+                        float dist1 = Vector3.Distance(s1.end, s2.start);
+                        float dist2 = Vector3.Distance(s2.end, s1.start);
+
+                        // Hata payı (Step size kadar veya biraz fazla)
+                        float threshold = RoomManager.Instance.scanStepSize * 1.5f;
+
+                        if (dist1 < threshold)
+                        {
+                            // S1 -> S2 birleşir
+                            s1.end = s2.end; // S1'i uzat
+                            dirSegments.RemoveAt(j); // S2'yi sil
+                            changed = true;
+                            break;
+                        }
+                        else if (dist2 < threshold)
+                        {
+                            // S2 -> S1 birleşir
+                            s1.start = s2.start; // S1'i geriye uzat
+                            dirSegments.RemoveAt(j); // S2'yi sil
+                            changed = true;
+                            break;
+                        }
+                    }
+                    if (changed) break;
+                }
+            }
+
+            // Kalan birleşmiş segmentlerden Portal oluştur
+            foreach (var seg in dirSegments)
+            {
+                CreateFinalPortal(room, seg);
+            }
+        }
     }
+
+    private static void CreateFinalPortal(RoomManager.RoomData room, PortalSegment seg)
+    {
+        // Genişlik
+        float width = Vector3.Distance(seg.start, seg.end);
+
+        // Çok küçük delikleri (örn raycast hatası) ele
+        if (width < 0.3f) return;
+
+        // Merkez
+        Vector3 center = (seg.start + seg.end) / 2.0f;
+
+        // Yükseklik Ayarı (Zemine oturtma)
+        // Odanın merkezinden aşağı ray atıp zemini bulalım (Daha güvenli)
+        float floorY = room.bounds.min.y;
+        Vector3 rayOrigin = new Vector3(center.x, room.centerPoint.y + 1.0f, center.z);
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, 20f))
+        {
+            // Floor veya Wall layer'a çarpması lazım
+            floorY = hit.point.y;
+        }
+        center.y = floorY + 1.0f; // Portalın görsel merkezi
+
+        // Yönü Düzelt (Segmentin yönü Grid yönüydü, Rotation için Vector3 lazım)
+        Vector3 dirVec = new Vector3(seg.direction.x, 0, seg.direction.z);
+
+        // --- PORTAL DATA OLUŞTUR ---
+        RoomManager.PortalData p = new RoomManager.PortalData();
+        p.position = center;
+        p.rotation = Quaternion.LookRotation(dirVec);
+        p.size = new Vector3(width, 2.0f, 0.5f); // Yükseklik 2m standart
+
+        // Hitbox
+        if (RoomManager.Instance != null)
+        {
+            UpdatePortalHitbox(p, RoomManager.Instance.hitboxDepth, RoomManager.Instance.hitboxInnerPadding, RoomManager.Instance.hitboxHeight, RoomManager.Instance.hitboxWidthPadding);
+        }
+        else UpdatePortalHitbox(p, 4.0f, 0.5f, 4.0f, 0.2f);
+
+        room.portals.Add(p);
+    }
+
     public static void UpdatePortalHitbox(RoomManager.PortalData portal, float depth, float innerPadding, float height, float widthPadding)
     {
-        // 1. Toplam Derinlik: İçeri Pay + Dışarı Pay
+        // 1. Toplam Derinlik
         float totalDepth = innerPadding + depth;
 
-        // 2. Merkez Kaydırma (Center Shift)
-        // Hitbox'ın merkezi, Portal merkezinden dışarı doğru kaymalı.
-        // Ne kadar? -> (Toplam Derinlik / 2) - İçeri Pay
-        // Örn: Derinlik 4, İçeri 0.5 -> Toplam 4.5 -> Yarısı 2.25 -> Shift = 2.25 - 0.5 = 1.75 birim dışarı.
+        // 2. Merkez Kaydırma (Local Shift)
+        // Artık "World Position" hesaplamıyoruz. Sadece "Ne kadar ileri gideyim?" hesabı yapıyoruz.
+        // Portalın merkezi (0,0,0) kabul edilirse, ileriye (Z) ne kadar gideceğiz?
+        float localZShift = (totalDepth / 2.0f) - innerPadding;
 
-        float centerShift = (totalDepth / 2.0f) - innerPadding;
-        Vector3 forward = portal.rotation * Vector3.forward;
-        Vector3 newCenter = portal.position + (forward * centerShift);
+        // --- KRİTİK DEĞİŞİKLİK: LOCAL SPACE ---
+        // Bounds merkezini (0, 0, localZShift) yapıyoruz.
+        // Yani portalın tam göbeğinden, hesapladığımız kadar ileriye (Z ekseninde) koyuyoruz.
+        Vector3 localCenter = new Vector3(0, 0, localZShift);
 
-        // Yüksekliği de yerden başlatmak yerine merkezden başlatıp büyütüyoruz
-        // Ama Y eksenini portal merkezinde (yerden 1m yukarı) tutarsak, height 4 olunca yere -1, tavana +3 gider.
-        // Bu yüzden Y'yi biraz yukarı kaldırabiliriz veya portal merkezine sabitleyebiliriz.
-        // Şimdilik portal merkezine (yerden 1m) sabitliyoruz, height artarsa yere ve tavana eşit büyür.
+        // Boyutlar (Local Size)
+        // Genişlik (X), Yükseklik (Y), Derinlik (Z)
+        Vector3 localSize = new Vector3(portal.size.x + widthPadding, height, totalDepth);
 
-        portal.triggerZone = new Bounds(newCenter, new Vector3(portal.size.x + widthPadding, height, totalDepth));
+        // Artık bu Bounds, dünya ekseninden bağımsız, sadece portalın "Vücut Ölçülerini" tutuyor.
+        portal.triggerZone = new Bounds(localCenter, localSize);
     }
 }
