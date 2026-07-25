@@ -1,6 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using UnityEngine;
 using TMPro;
-using UnityEngine;
 using FMODUnity;
 
 [RequireComponent(typeof(AudioSourceBase))]
@@ -9,7 +8,7 @@ public class SpeakerDebugger : MonoBehaviour
     [Header("Debug Settings")]
     public bool showDebug = true;
     public Vector3 textOffset = new Vector3(0, 2.0f, 0);
-    public float fontSize = 3.5f;
+    public float fontSize = 3.0f;
     public Color textColor = Color.yellow;
 
     private AudioSourceBase audioSource;
@@ -49,58 +48,52 @@ public class SpeakerDebugger : MonoBehaviour
 
         textObj.SetActive(true);
 
+        // Veriler
         float currentFreq = audioSource.GetCurrentFreq();
-        float vol = audioSource.GetCurrentVol();
-        float pan = audioSource.GetCurrentPan();
+        float targetFreq = audioSource.GetTargetFreq(); // Base'e eklediğimiz getter
+        float currentVol = audioSource.GetCurrentVol();
+        float currentPan = audioSource.GetCurrentPan();
         float dist = audioSource.currentDistance;
-        bool blocked = audioSource.isObstructed;
-        string winner = audioSource.frequencyWinner;
-        string tagInfo = audioSource.matchedTag;
 
-        string panStr = "C";
-        if (pan < -0.1f) panStr = "L";
-        else if (pan > 0.1f) panStr = "R";
+        // Winner Bilgileri (SpeakerController'dan)
+        string volWin = speakerController != null ? speakerController.volWinner : "-";
+        string freqWin = speakerController != null ? speakerController.freqWinner : "-";
 
-        string blockStr = blocked ? "<color=red>BLOCKED</color>" : "<color=green>CLEAR</color>";
-        string winnerColor = "<color=white>";
-        if (winner == "WALL") winnerColor = "<color=#FFAA00>";
-        else if (winner == "PORTAL") winnerColor = "<color=#00FFFF>";
-        else if (winner == "DIRECT") winnerColor = "<color=green>";
-
-        string portalInfo = "NO PORTAL";
-        if (audioSource.portalFound)
+        // Hardness
+        string roomInfo = "NO ROOM";
+        if (speakerController != null && speakerController.myRoom != null)
         {
-            portalInfo = $"<color=cyan>PORTAL ACTIVE</color>";
+            roomInfo = $"H:{speakerController.myRoom.hardness:0.0}";
         }
 
-        // --- SADECE AUX 1 GÖSTERİMİ ---
-        string auxInfo = "";
+        // Aux
+        string auxInfo = "AUX: OFF";
         if (emitter != null && emitter.EventInstance.isValid())
         {
             float aux1;
             emitter.EventInstance.getParameterByName("Aux1Send", out aux1);
-
-            string a1Color = aux1 > 0 ? "<color=green>" : "<color=grey>";
-            auxInfo = $"\nAUX1: {a1Color}{aux1:0.00}</color>";
+            string a1Color = aux1 > 0.9f ? "<color=green>" : "<color=grey>";
+            auxInfo = $"AUX1: {a1Color}{aux1:0.00}</color>";
         }
 
         debugText.text = string.Format(
-                    "<size=120%>{0}</size>\n" +
-                    "DIST: <color=white>{1:0.0}m</color> | {2}\n" +
-                    "MODE: {3}<b>{4}</b></color>\n" +
-                    "FREQ: {5:0} Hz | VOL: {6:0.0} dB\n" +
-                    "PAN : <color=green>{7:0.00}</color> ({8})\n" +
-                    "{9}" + // Portal Info
-                    "{10}", // Aux Info
+             "<size=120%>{0}</size>\n" +
+             "ROOM: <color=#DDDDDD>{1}</color>\n" +
+             "DIST: {2:0.0}m\n" +
+             "-----------------\n" +
+             "FREQ: {3:0}Hz <color=orange>[{4}]</color>\n" +
+             "VOL : {5:0.0}dB <color=orange>[{6}]</color>\n" +
+             "PAN : {7:0.00}\n" +
+             "{8}",
 
-                    tagInfo.ToUpper(),
-                    dist, blockStr,
-                    winnerColor, winner,
-                    currentFreq, vol,
-                    pan, panStr,
-                    portalInfo,
-                    auxInfo
-               );
+             audioSource.matchedTag.ToUpper(),
+             roomInfo,
+             dist,
+             currentFreq, freqWin,  // Freq + Winner (REAR/WALL/AIR)
+             currentVol, volWin,    // Vol + Winner (DIST/WALL)
+             currentPan,
+             auxInfo
+        );
 
         if (mainCamera != null)
         {

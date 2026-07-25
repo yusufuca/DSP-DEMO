@@ -2,7 +2,7 @@
 - Project name: DSP-DEMO
 - Unity version: Unity 2022.3.62f1
 - Active game object:
-  - Name: GENERATORS
+  - Name: Audio System
   - Tag: Untagged
   - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->

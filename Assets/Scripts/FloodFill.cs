@@ -15,7 +15,7 @@ public class FloodFill : MonoBehaviour
     private void Start()
     {
         detect = DetectingWall.DetectInstance;
-        // ... (Layer bulma kodları aynı, dokunma) ...
+     
         if (detect != null)
         {
             if (detect.FloorLayer.value != 0) floorLayer = detect.FloorLayer;
@@ -31,10 +31,10 @@ public class FloodFill : MonoBehaviour
     public void GetOrCalculateRoom(System.Action<RoomManager.RoomData> onComplete)
     {
         if (IsScanning) return;
-        // Grid Kontrolü
+        
         if (RoomManager.Instance != null && RoomManager.Instance.TryGetRoomAt(transform.position, out RoomManager.RoomData existingRoom))
         {
-            if (debugDraw) Debug.Log($"[FloodFill] Cache'den geldi (Grid): {existingRoom.roomID}");
+            if (debugDraw) Debug.Log($"{existingRoom.roomID}");
             onComplete?.Invoke(existingRoom);
             return;
         }
@@ -48,7 +48,7 @@ public class FloodFill : MonoBehaviour
 
         float nodeSize = detect.nodeSize;
 
-        // --- ADIM 1: ZEMİN KONTROLÜ ---
+       
         float scanY = startPos.y;
         Vector3 rayOrigin = startPos + Vector3.up * 1.0f;
 
@@ -56,25 +56,20 @@ public class FloodFill : MonoBehaviour
         {
             scanY = startHit.point.y + (nodeSize * 0.5f);
         }
-        else
-        {
-            // Zemin yoksa iptal etme, belki havadayızdır ama log ver
-            // Debug.LogWarning("Zemin bulunamadı...");
-        }
+       
 
         Vector3 adjustedStart = new Vector3(startPos.x, scanY, startPos.z);
         Vector3 rawStart = SnapToGrid(adjustedStart, nodeSize);
 
         Queue<Vector3> wallQueue = new Queue<Vector3>();
         HashSet<Vector3> visited = new HashSet<Vector3>();
-        HashSet<Vector3Int> occupiedGridCells = new HashSet<Vector3Int>(); // Odanın ham hali
+        HashSet<Vector3Int> occupiedGridCells = new HashSet<Vector3Int>(); 
 
         float accumulatedHardness = 0f;
         float accumulatedJagness = 0f;
         int totalWallsTouched = 0;
         float calculatedTotalVolume = 0f;
 
-        // Bounds hesabı için (Sadece Portal Scanner için lazım olacak)
         Vector3 minPoint = rawStart;
         Vector3 maxPoint = rawStart;
 
@@ -88,8 +83,6 @@ public class FloodFill : MonoBehaviour
             Vector3 currentPos = wallQueue.Dequeue();
             safetyCounter++;
 
-            // --- HACİM VE HÜCRE KAYDI ---
-            // ... (Hacim hesaplama kodları aynı kalsın) ...
             float ceilingDist = 0f; float floorDist = 0f;
             if (Physics.Raycast(currentPos, Vector3.up, out RaycastHit hitUp, 20f, detect.WallLayer)) ceilingDist = hitUp.distance;
             if (Physics.Raycast(currentPos, Vector3.down, out RaycastHit hitDown, 20f, floorLayer)) floorDist = hitDown.distance;
@@ -98,13 +91,13 @@ public class FloodFill : MonoBehaviour
             if (totalHeight < 0.1f) totalHeight = nodeSize;
             calculatedTotalVolume += (nodeSize * nodeSize) * totalHeight;
 
-            // Bounds genişletme
+          
             Vector3 pointTop = currentPos + Vector3.up * ceilingDist;
             Vector3 pointBottom = currentPos + Vector3.down * floorDist;
             minPoint = Vector3.Min(minPoint, pointBottom);
             maxPoint = Vector3.Max(maxPoint, pointTop);
 
-            // 1. HÜCREYİ EKLE (Grid)
+       
             if (RoomManager.Instance != null)
             {
                 Vector3Int gridPos = RoomManager.Instance.WorldToGrid(currentPos);
@@ -113,7 +106,6 @@ public class FloodFill : MonoBehaviour
 
             if (debugDraw) DrawDebugBox(currentPos, Vector3.one * (nodeSize * 0.9f), Quaternion.identity, Color.yellow, 10f);
 
-            // --- KOMŞU TARAMA ---
             Vector3[] neighbors = new Vector3[]
             {
                 currentPos + Vector3.forward * nodeSize,
@@ -126,15 +118,14 @@ public class FloodFill : MonoBehaviour
             {
                 if (visited.Contains(target)) continue;
 
-                // A) DUVAR MI? (Wall Layer)
+           
                 if (IsWall(target))
                 {
                     if (!visited.Contains(target))
                     {
                         visited.Add(target);
 
-                        // --- KRİTİK: DUVARI DA ODAYA DAHİL ET ---
-                        // Duvarın kendisini de odanın bir parçası sayıyoruz.
+                      
                         if (RoomManager.Instance != null)
                         {
                             Vector3Int wallGridPos = RoomManager.Instance.WorldToGrid(target);
@@ -151,10 +142,10 @@ public class FloodFill : MonoBehaviour
 
                         if (debugDraw) DrawDebugBox(SnapToGrid(target, nodeSize), Vector3.one * (nodeSize * 0.9f), Quaternion.identity, Color.red, 10f);
                     }
-                    continue; // Duvarın içine girme, sadece kaydet
+                    continue;
                 }
 
-                // B) ZEMİN VAR MI? (Floor Layer)
+               
                 bool hasFloor = Physics.Raycast(target + Vector3.up, Vector3.down, 5.0f, floorLayer);
                 if (hasFloor)
                 {
@@ -163,22 +154,19 @@ public class FloodFill : MonoBehaviour
                 }
                 else
                 {
-                    visited.Add(target); // Boşluk
+                    visited.Add(target);
                 }
             }
         }
 
-        // --- ADIM 2: HÜCRELERİ GENİŞLET (DILATION) ---
-        // Odanın şeklini bozmadan (L ise L kalarak) kenarlardan şişiriyoruz.
         int expansionSteps = RoomManager.Instance != null ? RoomManager.Instance.roomExpansionSteps : 1;
 
         if (expansionSteps > 0)
         {
             occupiedGridCells = ExpandRoomCells(occupiedGridCells, expansionSteps);
         }
-        // ---------------------------------------------
+       
 
-        // --- ODA OLUŞTURMA ---
         RoomManager.RoomData newRoom = new RoomManager.RoomData();
         newRoom.bounds = new Bounds();
         newRoom.bounds.SetMinMax(minPoint, maxPoint);
@@ -191,7 +179,7 @@ public class FloodFill : MonoBehaviour
         }
 
         newRoom.volume = calculatedTotalVolume;
-        newRoom.occupiedCells = occupiedGridCells; // Genişletilmiş hücreleri kaydet
+        newRoom.occupiedCells = occupiedGridCells;
 
         if (totalWallsTouched > 0)
         {
@@ -208,7 +196,6 @@ public class FloodFill : MonoBehaviour
         IsScanning = false;
     }
 
-    // --- YENİ FONKSİYON: HÜCRE GENİŞLETME ---
     HashSet<Vector3Int> ExpandRoomCells(HashSet<Vector3Int> originalCells, int steps)
     {
         HashSet<Vector3Int> expandedCells = new HashSet<Vector3Int>(originalCells);
@@ -240,8 +227,7 @@ public class FloodFill : MonoBehaviour
         return expandedCells;
     }
 
-    // ... (SnapToGrid, IsWall, GetMaterialData, DrawDebugBox AYNI KALSIN) ...
-    // Aşağıdakileri önceki kodundan kopyala/yapıştır yapabilirsin.
+  
 
     Vector3 SnapToGrid(Vector3 pos, float size)
     {
@@ -279,7 +265,7 @@ public class FloodFill : MonoBehaviour
 
     void DrawDebugBox(Vector3 center, Vector3 size, Quaternion rotation, Color color, float duration = 0.1f)
     {
-        // (Eski kodundaki DrawDebugBox aynen buraya)
+        
         Vector3 half = size * 0.5f;
         Vector3[] points = new Vector3[8];
         points[0] = center + rotation * new Vector3(-half.x, -half.y, -half.z);

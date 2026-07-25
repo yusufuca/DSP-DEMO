@@ -165,10 +165,10 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 639053970347801453
+  lastModified: 639056011225007780
   FileSizes:
   - Name: Desktop
-    Value: 1118752
+    Value: 1120288
   Exists: 1
 --- !u!114 &-5182191362649089984
 MonoBehaviour:
@@ -447,7 +447,7 @@ MonoBehaviour:
   StringsBanks:
   - {fileID: 5800111078373747694}
   cacheVersion: 131857
-  cacheTime: 639053970347839522
+  cacheTime: 639056011225047792
   SerializableEventsDict:
   - key: event:/Clap
     index: 0
@@ -647,7 +647,7 @@ MonoBehaviour:
   Path: Assets/Audio/dsp-demo/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 639053970347839522
+  lastModified: 639056011225047792
   FileSizes:
   - Name: Desktop
     Value: 2324

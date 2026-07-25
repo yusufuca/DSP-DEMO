@@ -24,7 +24,6 @@ public class RoomManager : MonoBehaviour
     [Tooltip("Işın menzili. Duvarı delip geçecek kadar olmalı.")]
     public float portalRayLength = 2.0f;
 
-    // ... (PortalData, RoomData Classları ve Listeler AYNI KALSIN) ...
     [System.Serializable]
     public class PortalData
     {
@@ -96,7 +95,7 @@ public class RoomManager : MonoBehaviour
         LayerMask wallLayer = DetectingWall.DetectInstance != null ? DetectingWall.DetectInstance.WallLayer : LayerMask.GetMask("Wall");
         PortalScanner.ScanRoomPortals(newRoom, wallLayer);
 
-        Debug.Log($"[RoomManager] Oda Kaydedildi: {newRoom.roomID} | Cells: {newRoom.occupiedCells.Count}");
+        Debug.Log($"[RoomManager] Room Saved: {newRoom.roomID} | Cells: {newRoom.occupiedCells.Count}");
     }
 
     public Vector3Int WorldToGrid(Vector3 pos)

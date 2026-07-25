@@ -218,7 +218,7 @@ public class DetectingWall : MonoBehaviour
                 Debug.DrawRay(origin, currentWorldDir * maxDistance, s.color);
 
               
-                    s.ui.text = $"{s.name} {hitTag} Detected. Distance: {distances[i]:F2} Hardness: {hardnesses[i]} Jagness: {jagnesses[i]}";
+                    s.ui.text = $"{s.name} {hitTag} Detected. Distance: {distances[i]:F1} Hardness: {hardnesses[i]} Jagness: {jagnesses[i]}";
                 
             }
             else

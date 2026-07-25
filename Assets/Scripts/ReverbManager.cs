@@ -1,10 +1,7 @@
 ﻿using FMOD;
 using FMOD.Studio;
 using FMODUnity;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
 using TMPro;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -19,19 +16,19 @@ public class ReverbManager : MonoBehaviour
     private RoomManager.RoomData currentRoomData;
     private FloodFill playerScanner;
 
+    // FMOD Parametre ID'leri
     private FMOD.Studio.PARAMETER_ID reverbTimeID, earlyDelayID, lateDelayID, onOFID, diffusionID, densityID, hfDecayID, hfRefID,
        highCutID, delayMixID, dLateID, dHighCutID, outdoorReverbTimeID, dFeedbackID, lowGainID, lowFreqID, dReverbMixID;
 
-    private PARAMETER_ID aux1_TimeID, aux1_DelayID, aux1_DiffID, aux1_HFCutID;
-    private PARAMETER_ID aux2_TimeID, aux2_DelayID, aux2_DiffID, aux2_HFCutID;
+    private PARAMETER_ID aux1_TimeID, aux1_HFCutID;
+    private PARAMETER_ID aux2_TimeID, aux2_HFCutID;
 
+    // Hangi odanın hangi Aux'ta olduğunu tutar
     public Dictionary<RoomManager.RoomData, int> roomToAuxMap = new Dictionary<RoomManager.RoomData, int>();
 
-    [Header("Portal Cone Settings")]
-    [Tooltip("Kapının önündeki koninin açısı (Derece cinsinden). Örn: 45 derece.")]
-    public float portalConeAngle = 45f;
-    [Tooltip("Bu koninin ne kadar uzağına kadar algılama yapılsın?")]
-    public float portalConeRange = 5.0f;
+    public ReverbState mainReverbState;
+    public ReverbState aux1State;
+    public ReverbState aux2State;
 
     public struct ReverbState
     {
@@ -54,42 +51,26 @@ public class ReverbManager : MonoBehaviour
         public float dReverbMixDB;
     }
 
-    public ReverbState mainReverbState;
-    public ReverbState aux1State;
-    public ReverbState aux2State;
-
     [Header("UI & Debug")]
     public TextMeshProUGUI reverbTimeText;
     public TextMeshProUGUI roomDataText;
     public TextMeshProUGUI roomModeText;
 
-    private float dLateDelayCalc = 0f;
-    private float dFeedbackCalc = 0f;
-    private float dDiffusionCalc = 0f;
-    private float dHighCutCalc = 20000f;
-    private float outMixCalc = 0f;
+    // Outdoor Değişkenleri
     private float outdoorReverbTimeCalc = 0f;
+    private float dLateDelayCalc = 0f;
+    private float dHighCutCalc = 20000f;
+    private float dDiffusionCalc = 0f;
+    private float dFeedbackCalc = 0f;
+    private float outMixCalc = 0f;
     private float dReverbMixCalc = 0f;
 
     private float scanTimer = 0f;
-    private float scanInterval = 5f;
+    private float scanInterval = 1f;
     private bool isChecking = false;
-
 
     [Header("Outdoor / Probe Settings")]
     public float maxProbeDistance = 50f;
-
-    private void Awake()
-    {
-        if (RevInstance != null && RevInstance != this)
-        {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            RevInstance = this;
-        }
-    }
 
 
     public EventReference rifleSfx;
@@ -100,6 +81,13 @@ public class ReverbManager : MonoBehaviour
     public EventReference musicLoops;
     private EventInstance musicInstance;
 
+
+    private void Awake()
+    {
+        if (RevInstance != null && RevInstance != this) Destroy(this.gameObject);
+        else RevInstance = this;
+    }
+
     private void Start()
     {
         detect = DetectingWall.DetectInstance;
@@ -108,84 +96,77 @@ public class ReverbManager : MonoBehaviour
 
     private void Update()
     {
-        CalculateMainReverb();
-        ApplyMainReverbToFMOD();
-
+        // Player Kontrolü
         if (playerTransform == null)
         {
             GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-            if (playerObj != null)
-            {
-                playerTransform = playerObj.transform;
-            }
-            else
-            {
-                Debug.LogError("[ReverbManager] 'Player' tag'ine sahip obje bulunamadı!");
-                return;
-            }
+            if (playerObj != null) playerTransform = playerObj.transform;
+            else return;
         }
 
         if (playerScanner == null) playerScanner = playerTransform.gameObject.AddComponent<FloodFill>();
 
-        scanTimer += Time.deltaTime;
-        if (detect.distances[4] > 2 && !isChecking && scanTimer >= scanInterval)
+        // 1. Odayı Tara (Main Reverb için)
+        if (detect.distances[4] > 2)
         {
-            CheckCurrentRoom();
-            scanTimer = 0f;
+            scanTimer += Time.deltaTime;
+            if (!isChecking && scanTimer >= scanInterval)
+            {
+                CheckCurrentRoom();
+                scanTimer = 0f;
+            }
         }
+
+        // 2. Main Reverb Hesapla ve Gönder
+        CalculateMainReverb();
+        ApplyMainReverbToFMOD();
+
+        // 3. KRİTİK: Aux (Portal) Reverb Yönetimi
         ManageAuxReverbs();
     }
 
+    // --- EN ÖNEMLİ KISIM: AUX YÖNETİMİ ---
     void ManageAuxReverbs()
     {
         if (RoomManager.Instance == null) return;
         roomToAuxMap.Clear();
 
-        RoomManager.RoomData bestRoom = null;
+        RoomManager.RoomData portalRoom = null;
 
+        // Tüm odaları gez, oyuncu bir portalın hitbox'ında mı diye bak
         foreach (var room in RoomManager.Instance.allRooms)
         {
             foreach (var portal in room.portals)
             {
-                // FIX: Yeni matematiksel kontrolü çağırıyoruz
+                // Eğer oyuncu portalın içindeyse
                 if (IsPlayerInPortalHitbox(portal))
                 {
-                    bestRoom = room;
+                    // Bu odayı Aux 1 için ayırıyoruz
+                    portalRoom = room;
                     break;
                 }
             }
-            if (bestRoom != null) break;
+            if (portalRoom != null) break;
         }
 
-        if (bestRoom != null)
+        // Eğer portal içindeysek, o odayı Aux 1'e ata ve parametrelerini güncelle
+        if (portalRoom != null)
         {
-            roomToAuxMap[bestRoom] = 1;
-            UpdateAuxParams(1, bestRoom);
+            roomToAuxMap[portalRoom] = 1;
+            UpdateAuxParams(1, portalRoom);
         }
     }
 
-    // --- FIX BURADA ---
+    // SpeakerController'daki Local Space mantığının aynısı
     bool IsPlayerInPortalHitbox(RoomManager.PortalData portal)
     {
-        // 1. Oyuncunun Dünya Pozisyonu
         Vector3 playerPos = playerTransform.position;
-
-        // 2. Portalın Çapa Noktası (World Space Position)
-        Vector3 portalAnchor = portal.position;
-
-        // 3. Oyuncuyu Portala Göre Yerelleştir (World -> Local Transformation)
-        // Oyuncunun portala olan uzaklık vektörünü bul
-        Vector3 relativeDir = playerPos - portalAnchor;
-
-        // Bu vektörü portalın ters rotasyonuyla çarp ki portal düzmüş gibi hesap yapalım
+        // Dünya pozisyonundan Portalın Yerel Uzayına dönüşüm
+        Vector3 relativeDir = playerPos - portal.position;
         Vector3 localPos = Quaternion.Inverse(portal.rotation) * relativeDir;
 
-        // 4. Bounds Kontrolü
-        // triggerZone artık Local koordinatlarda olduğu için (Center: 0,0,Offset)
-        // yerelleştirdiğimiz oyuncu pozisyonunu doğrudan içinde mi diye sorabiliriz.
         return portal.triggerZone.Contains(localPos);
     }
-    // ------------------
 
     public int GetAuxIndexForRoom(RoomManager.RoomData room)
     {
@@ -194,24 +175,7 @@ public class ReverbManager : MonoBehaviour
         return 0;
     }
 
-    ReverbState CalculateReverbForRoom(RoomManager.RoomData data)
-    {
-        ReverbState state = new ReverbState();
-        if (data == null) return state;
-
-        float vol = data.volume;
-        float hard = data.hardness;
-
-        float rawTime = vol * hard * 0.05f * 1000f;
-        state.reverbTime = Mathf.Clamp(rawTime, 100f, 10000f);
-
-        state.highCut = 2000f + (hard * 18000f);
-        state.diffusion = hard * 100f;
-        state.earlyDelay = (vol / 100f) * 20f;
-
-        return state;
-    }
-
+    // Aux Parametrelerini FMOD'a Gönder
     void UpdateAuxParams(int auxIndex, RoomManager.RoomData data)
     {
         ReverbState state = CalculateReverbForRoom(data);
@@ -228,19 +192,43 @@ public class ReverbManager : MonoBehaviour
         }
     }
 
+    // Odanın Özelliklerine Göre Reverb Değerleri Hesapla
+    ReverbState CalculateReverbForRoom(RoomManager.RoomData data)
+    {
+        ReverbState state = new ReverbState();
+        if (data == null) return state;
+
+        float vol = data.volume;
+        float hard = data.hardness;
+
+        // Reverb Time (Hacim ve Sertlik)
+        float rawTime = vol * hard * 0.05f * 1000f;
+        state.reverbTime = Mathf.Clamp(rawTime, 100f, 10000f);
+
+        // High Cut (Sertlik)
+        state.highCut = 2000f + (hard * 18000f);
+
+        // Diğer değerler (Aux için şu an sadece Time ve HCut önemli)
+        state.diffusion = hard * 100f;
+        state.earlyDelay = (vol / 100f) * 20f;
+
+        return state;
+    }
+
     void CheckCurrentRoom()
     {
         if (RoomManager.Instance == null) return;
 
         Vector3 checkPos = playerTransform.position;
 
+        // Önce Dictionary'den hızlı bak
         if (RoomManager.Instance.TryGetRoomAt(checkPos, out RoomManager.RoomData room))
         {
-            Debug.Log($"[ReverbManager] Kayıtlı odaya girildi: {room.roomID}");
             currentRoomData = room;
         }
         else
         {
+            // Bulamazsa Tavan kontrolü ve FloodFill
             float ceilingDist = detect.distances[4];
             bool hasCeiling = ceilingDist > 0 && ceilingDist < 20f;
 
@@ -249,12 +237,9 @@ public class ReverbManager : MonoBehaviour
                 if (!playerScanner.IsScanning)
                 {
                     isChecking = true;
-                    Debug.Log($"[ReverbManager] YENİ ODA TESPİT EDİLDİ (Tavan: {ceilingDist:F1}m). Tarama Başlatılıyor...");
-
                     playerScanner.GetOrCalculateRoom((newRoom) =>
                     {
                         currentRoomData = newRoom;
-                        Debug.Log($"[ReverbManager] Tarama bitti, oda eklendi: {newRoom.roomID}");
                         isChecking = false;
                     });
                 }
@@ -278,7 +263,6 @@ public class ReverbManager : MonoBehaviour
             float hard = currentRoomData.hardness;
             float jag = currentRoomData.jagness;
 
-
             /* REVERB TIME  */
             float rawReverbTime = vol * hard * detect.reverbSizePar * 1000f;
             mainReverbState.reverbTime = Mathf.Clamp(rawReverbTime, 100f, 20000f);
@@ -286,7 +270,6 @@ public class ReverbManager : MonoBehaviour
             /* EARLY DELAY */
             float minWallDist = detect.maxDistance;
             for (int i = 0; i < 4; i++) { if (detect.distances[i] > 0 && detect.distances[i] < minWallDist) minWallDist = detect.distances[i]; }
-
             float rawEarlyDelay = (minWallDist / 343f) * 1000f;
             mainReverbState.earlyDelay = Mathf.Clamp(rawEarlyDelay, 0, 300);
 
@@ -297,23 +280,17 @@ public class ReverbManager : MonoBehaviour
                 float heightBonus = (detect.distances[4] + detect.distances[5]) - 10f;
                 mainReverbState.lateDelay += heightBonus * 1.5f;
             }
-
-            if (mainReverbState.reverbTime > 2000f && minWallDist < 2.0f)
-            {
-                mainReverbState.lateDelay += 30f;
-            }
+            if (mainReverbState.reverbTime > 2000f && minWallDist < 2.0f) mainReverbState.lateDelay += 30f;
             mainReverbState.lateDelay = Mathf.Clamp(mainReverbState.lateDelay, 0, 100);
 
             /* DIFFUSION */
             float difVolumeBonus = (mainReverbState.reverbTime / 20000) * 20;
             mainReverbState.diffusion = Mathf.Clamp((jag * 100) + difVolumeBonus, 0, 100);
-
             if (detect.distances[4] + detect.distances[5] > 10)
             {
                 float heightBonus = (detect.distances[4] + detect.distances[5]) - 10f;
                 mainReverbState.diffusion += heightBonus * 1.0f;
             }
-
             mainReverbState.diffusion = Mathf.Clamp(mainReverbState.diffusion, 0, 100);
 
             /* DENSITY */
@@ -344,31 +321,29 @@ public class ReverbManager : MonoBehaviour
 
             if (roomDataText != null)
                 roomDataText.text = $"INDOOR | Vol:{vol:F0} | Hard:{hard:F2} Jag: {jag}";
+                reverbTimeText.text = $"RevTime: {mainReverbState.reverbTime:F0} ms | EarlyDelay: {mainReverbState.earlyDelay:F0} ms | LateDelay: {mainReverbState.lateDelay:F0} \n" +
+                $"Diffusion: %{mainReverbState.diffusion:F0} | Density: %{mainReverbState.density:F0} | HF Decay: %{mainReverbState.hfDecay:F0} | HighCut: {mainReverbState.highCut:F0}hz \n" +
+                $" | LowFreq: {mainReverbState.lowFreq:F0}hz | LowGain: {mainReverbState.lowGain:F0}dB";
         }
         else
         {
             CalculateOutdoorEcho();
             mainReverbState.reverbTime = outdoorReverbTimeCalc;
             mainReverbState.outdoorReverbTime = outdoorReverbTimeCalc;
-
             mainReverbState.earlyDelay = dLateDelayCalc;
             mainReverbState.lateDelay = 0f;
-
             mainReverbState.diffusion = dDiffusionCalc;
             mainReverbState.density = 100f;
-
             mainReverbState.highCut = dHighCutCalc;
             mainReverbState.dHighCut = dHighCutCalc;
-
             mainReverbState.dFeedback = dFeedbackCalc;
             mainReverbState.dLateDelay = dLateDelayCalc;
-
             mainReverbState.onOF = 0f;
-
             mainReverbState.delayMixDB = Mathf.Lerp(-80f, 10f, outMixCalc);
             mainReverbState.dReverbMixDB = Mathf.Lerp(-80f, 0f, dReverbMixCalc);
 
             if (roomDataText != null) roomDataText.text = $"OUTDOOR | Echo:{dLateDelayCalc:F0}ms";
+            reverbTimeText.text = $"RoomRevTime: {mainReverbState.outdoorReverbTime:F0} ms | LateDelay: {mainReverbState.dLateDelay:F0}ms | Diff: {mainReverbState.diffusion:F0}";
         }
     }
 
@@ -378,15 +353,12 @@ public class ReverbManager : MonoBehaviour
         RuntimeManager.StudioSystem.setParameterByID(earlyDelayID, mainReverbState.earlyDelay);
         RuntimeManager.StudioSystem.setParameterByID(lateDelayID, mainReverbState.lateDelay);
         RuntimeManager.StudioSystem.setParameterByID(onOFID, mainReverbState.onOF);
-
         RuntimeManager.StudioSystem.setParameterByID(diffusionID, mainReverbState.diffusion);
         RuntimeManager.StudioSystem.setParameterByID(densityID, mainReverbState.density);
         RuntimeManager.StudioSystem.setParameterByID(hfDecayID, mainReverbState.hfDecay);
         RuntimeManager.StudioSystem.setParameterByID(highCutID, mainReverbState.highCut);
-
         RuntimeManager.StudioSystem.setParameterByID(lowFreqID, mainReverbState.lowFreq);
         RuntimeManager.StudioSystem.setParameterByID(lowGainID, mainReverbState.lowGain);
-
         RuntimeManager.StudioSystem.setParameterByID(dLateID, mainReverbState.dLateDelay);
         RuntimeManager.StudioSystem.setParameterByID(outdoorReverbTimeID, mainReverbState.outdoorReverbTime);
         RuntimeManager.StudioSystem.setParameterByID(dHighCutID, mainReverbState.dHighCut);
@@ -422,9 +394,6 @@ public class ReverbManager : MonoBehaviour
         Vector3 wallNormal = detect.wallNormals[closestIndex];
         Vector3 probeOrigin = hitPoint + (wallNormal * 2.0f);
         Vector3 rainOrigin = probeOrigin + (Vector3.up * 15f);
-
-        UnityEngine.Debug.DrawLine(hitPoint, probeOrigin, Color.yellow);
-        UnityEngine.Debug.DrawLine(rainOrigin, probeOrigin, Color.cyan);
 
         bool isStructure = false;
         float structureVolume = 0f;
@@ -491,6 +460,7 @@ public class ReverbManager : MonoBehaviour
         GetParamID("dFeedback", out dFeedbackID);
         GetParamID("dReverbMix", out dReverbMixID);
 
+        // Aux ID'leri
         GetParamID("aux1_ReverbTime", out aux1_TimeID);
         GetParamID("aux1_HighCut", out aux1_HFCutID);
         GetParamID("aux2_ReverbTime", out aux2_TimeID);
@@ -502,10 +472,5 @@ public class ReverbManager : MonoBehaviour
         FMOD.Studio.PARAMETER_DESCRIPTION desc;
         RuntimeManager.StudioSystem.getParameterDescriptionByName(name, out desc);
         id = desc.id;
-    }
-
-    public RoomManager.RoomData GetPlayerRoom()
-    {
-        return currentRoomData;
     }
 }
