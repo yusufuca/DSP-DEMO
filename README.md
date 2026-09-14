@@ -14,3 +14,6 @@ Tech Stack
 Engine: Unity 2022.3 (C#)
 
 Middleware: FMOD Studio
+
+Development notes
+The state machine design, the quantization approach, and the timer/priority logic are my own. Implementation was done iteratively with AI pair-programming, particularly for the UI, combat, and spawner scaffolding used to test the system in a playable scene. I can walk through and explain any part of this repository on request.
