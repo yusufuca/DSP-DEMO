@@ -1,4 +1,4 @@
-DSP-DEMO
+#DSP-DEMO — Procedural Room Acoustics & Occlusion Engine
 A real-time procedural acoustics and sound propagation engine built in Unity (C#) and FMOD Studio. It dynamically calculates room volume, material properties, and occlusion on the fly, eliminating the need for manual reverb zones.
 
 Core Systems
